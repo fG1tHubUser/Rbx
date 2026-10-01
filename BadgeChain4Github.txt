@@ -20,21 +20,12 @@ Players.CharacterAutoLoads = false
 
 local function forceBlackSky()
 	for _, child in ipairs(Lighting:GetChildren()) do
-		if child:IsA("Sky") then
-			child:Destroy()
-		end
+		if child:IsA("Sky") then child:Destroy() end
 	end
-
 	local sky = Instance.new("Sky")
 	sky.Name = "BlackSky"
-	sky.SkyboxBk = "rbxassetid://0"
-	sky.SkyboxDn = "rbxassetid://0"
-	sky.SkyboxFt = "rbxassetid://0"
-	sky.SkyboxLf = "rbxassetid://0"
-	sky.SkyboxRt = "rbxassetid://0"
-	sky.SkyboxUp = "rbxassetid://0"
+	sky.SkyboxBk, sky.SkyboxDn, sky.SkyboxFt, sky.SkyboxLf, sky.SkyboxRt, sky.SkyboxUp = "rbxassetid://0", "rbxassetid://0", "rbxassetid://0", "rbxassetid://0", "rbxassetid://0", "rbxassetid://0"
 	sky.Parent = Lighting
-
 	Lighting.Ambient = Color3.new(0, 0, 0)
 	Lighting.OutdoorAmbient = Color3.new(0, 0, 0)
 	Lighting.Brightness = 0
@@ -42,7 +33,6 @@ local function forceBlackSky()
 	Lighting.FogStart = 0
 	Lighting.ClockTime = 0
 end
-
 forceBlackSky()
 
 --============================================================
@@ -52,22 +42,17 @@ local gameList = {}
 local listLoaded = false
 
 local function loadGameList()
-	local success, body = pcall(function()
-		return HttpService:GetAsync(CHAIN_URL, true)
-	end)
-
+	local success, body = pcall(function() return HttpService:GetAsync(CHAIN_URL, true) end)
 	if not success or type(body) ~= "string" then
 		warn("[BadgeChain] Failed to load list")
 		listLoaded = true
 		return
 	end
-
+	
 	for line in body:gmatch("[^\r\n]+") do
 		line = line:match("^%s*(.-)%s*$")
-
 		if line ~= "" and not line:match("^#") then
 			local uniStr, placeStr = line:match("^(%d+)%s*,%s*(%d+)$")
-
 			if uniStr and placeStr then
 				table.insert(gameList, {
 					universeId = tonumber(uniStr),
@@ -76,85 +61,50 @@ local function loadGameList()
 			end
 		end
 	end
-
 	listLoaded = true
 end
-
 task.spawn(loadGameList)
 
 local function fetchBadgesForUniverse(universeId)
 	local all = {}
 	local cursor = nil
 	local pages = 0
-
 	while true do
 		pages += 1
-
 		local url = string.format(
 			"https://badges.roproxy.com/v1/universes/%d/badges?limit=100&sortOrder=Asc%s",
 			universeId,
 			cursor and ("&cursor=" .. HttpService:UrlEncode(cursor)) or ""
 		)
-
-		local success, response = pcall(function()
-			return HttpService:GetAsync(url, true)
-		end)
-
+		local success, response = pcall(function() return HttpService:GetAsync(url, true) end)
 		if not success then
-			url = string.format(
-				"https://badges.roblox.com/v1/universes/%d/badges?limit=100&sortOrder=Asc%s",
-				universeId,
-				cursor and ("&cursor=" .. HttpService:UrlEncode(cursor)) or ""
-			)
-
-			success, response = pcall(function()
-				return HttpService:GetAsync(url, true)
-			end)
+			url = string.format("https://badges.roblox.com/v1/universes/%d/badges?limit=100&sortOrder=Asc%s", universeId, cursor and ("&cursor=" .. HttpService:UrlEncode(cursor)) or "")
+			success, response = pcall(function() return HttpService:GetAsync(url, true) end)
 		end
-
-		if not success then
-			return nil
-		end
-
-		local ok, data = pcall(function()
-			return HttpService:JSONDecode(response)
-		end)
-
-		if not ok or type(data) ~= "table" then
-			return nil
-		end
-
+		if not success then return nil end
+		
+		local ok, data = pcall(function() return HttpService:JSONDecode(response) end)
+		if not ok or type(data) ~= "table" then return nil end
+		
 		if data.data then
 			for _, badge in ipairs(data.data) do
 				if badge.id and badge.enabled ~= false then
-					table.insert(all, {
-						id = badge.id
-					})
+					table.insert(all, { id = badge.id })
 				end
 			end
 		end
-
 		cursor = data.nextPageCursor
-
-		if not cursor or cursor == "" or pages > 40 then
-			break
-		end
-
+		if not cursor or cursor == "" or pages > 40 then break end
 		task.wait(0.08)
 	end
-
 	return all
 end
 
 local function isRateLimitError(err)
 	local lower = string.lower(tostring(err))
-
 	for _, keyword in ipairs(RATE_LIMIT_KEYWORDS) do
-		if string.find(lower, keyword, 1, true) then
-			return true
-		end
+		if string.find(lower, keyword, 1, true) then return true end
 	end
-
 	return false
 end
 
@@ -163,10 +113,7 @@ end
 --============================================================
 local function createGui(player)
 	local playerGui = player:WaitForChild("PlayerGui", 10)
-
-	if not playerGui then
-		return nil
-	end
+	if not playerGui then return nil end
 
 	local MainGui_1 = Instance.new("ScreenGui")
 	MainGui_1.Name = "MainGui"
@@ -206,12 +153,7 @@ local function createGui(player)
 	BG_3.Parent = Mainframe_2
 
 	local UIGradient_4 = Instance.new("UIGradient")
-	UIGradient_4.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.new(0.0784313753247261, 0, 0.12156862765550613)),
-		ColorSequenceKeypoint.new(0.5, Color3.new(0.2823529541492462, 0, 0.42352941632270813)),
-		ColorSequenceKeypoint.new(0.9567474126815796, Color3.new(0.2862745225429535, 0, 0.41960784792900085)),
-		ColorSequenceKeypoint.new(1, Color3.new(0.062745101749897, 0, 0.0941176488995552))
-	})
+	UIGradient_4.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.0784313753247261, 0, 0.12156862765550613)), ColorSequenceKeypoint.new(0.5, Color3.new(0.2823529541492462, 0, 0.42352941632270813)), ColorSequenceKeypoint.new(0.9567474126815796, Color3.new(0.2862745225429535, 0, 0.41960784792900085)), ColorSequenceKeypoint.new(1, Color3.new(0.062745101749897, 0, 0.0941176488995552))})
 	UIGradient_4.Rotation = 90
 	UIGradient_4.Parent = BG_3
 
@@ -245,12 +187,7 @@ local function createGui(player)
 	GalaxyBG_7.Parent = BG2_Galaxy_6
 
 	local UIGradient_8 = Instance.new("UIGradient")
-	UIGradient_8.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.new(0.0784313753247261, 0, 0.12156862765550613)),
-		ColorSequenceKeypoint.new(0.5, Color3.new(0.2823529541492462, 0, 0.42352941632270813)),
-		ColorSequenceKeypoint.new(0.9567474126815796, Color3.new(0.2862745225429535, 0, 0.41960784792900085)),
-		ColorSequenceKeypoint.new(1, Color3.new(0.062745101749897, 0, 0.0941176488995552))
-	})
+	UIGradient_8.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.0784313753247261, 0, 0.12156862765550613)), ColorSequenceKeypoint.new(0.5, Color3.new(0.2823529541492462, 0, 0.42352941632270813)), ColorSequenceKeypoint.new(0.9567474126815796, Color3.new(0.2862745225429535, 0, 0.41960784792900085)), ColorSequenceKeypoint.new(1, Color3.new(0.062745101749897, 0, 0.0941176488995552))})
 	UIGradient_8.Rotation = 90
 	UIGradient_8.Parent = BG2_Galaxy_6
 
@@ -302,11 +239,7 @@ local function createGui(player)
 	UICorner_15.Parent = BarFill_14
 
 	local UIGradient_16 = Instance.new("UIGradient")
-	UIGradient_16.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.new(0.1764705926179886, 0.05098039284348488, 0.29411765933036804)),
-		ColorSequenceKeypoint.new(0.5051903128623962, Color3.new(0.5925096869468689, 0.5304158926010132, 0.6507225632667542)),
-		ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
-	})
+	UIGradient_16.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.1764705926179886, 0.05098039284348488, 0.29411765933036804)), ColorSequenceKeypoint.new(0.5051903128623962, Color3.new(0.5925096869468689, 0.5304158926010132, 0.6507225632667542)), ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))})
 	UIGradient_16.Rotation = -90
 	UIGradient_16.Parent = BarFill_14
 
@@ -315,7 +248,7 @@ local function createGui(player)
 	IconColorCorrection_17.Size = UDim2.new(0.17352384328842163, 0, 0.31255286931991577, 0)
 	IconColorCorrection_17.Position = UDim2.new(0.49862879514694214, 0, 0.4380945861339569, 0)
 	IconColorCorrection_17.AnchorPoint = Vector2.new(0.5, 0.5)
-	IconColorCorrection_17.ImageTransparency = 0.67
+	IconColorCorrection_17.Transparency = 0.67
 	IconColorCorrection_17.BackgroundTransparency = 1
 	IconColorCorrection_17.ZIndex = 12
 	IconColorCorrection_17.Image = "rbxassetid://112500992228559"
@@ -436,7 +369,7 @@ local function createGui(player)
 	StatusText_31.TextSize = 20
 	StatusText_31.TextScaled = true
 	StatusText_31.FontFace = Font.fromName(
-		"Highway",
+		"HighwayGothic",
 		Enum.FontWeight.Regular,
 		Enum.FontStyle.Italic
 	)
@@ -460,7 +393,7 @@ local function createGui(player)
 	GamePositionTracker_33.TextSize = 36
 	GamePositionTracker_33.TextScaled = true
 	GamePositionTracker_33.FontFace = Font.fromName(
-		"Arial",
+		"LegacyArial",
 		Enum.FontWeight.Bold,
 		Enum.FontStyle.Normal
 	)
@@ -484,7 +417,7 @@ local function createGui(player)
 	MainTitle_35.TextSize = 36
 	MainTitle_35.TextScaled = true
 	MainTitle_35.FontFace = Font.fromName(
-		"Arial",
+		"LegacyArial",
 		Enum.FontWeight.Bold,
 		Enum.FontStyle.Normal
 	)
@@ -515,25 +448,9 @@ local function setPhase(gui, statusStr, infoStr)
 end
 
 local function updateProgress(gui, owned, total)
-	if not gui then
-		return
-	end
-
+	if not gui then return end
 	local alpha = (total > 0) and math.clamp(owned / total, 0, 1) or 0
-
-	TweenService:Create(
-		gui.barFill,
-		TWEEN_BAR,
-		{
-			Size = UDim2.new(
-				MAX_BAR_WIDTH * alpha,
-				0,
-				BAR_HEIGHT,
-				0
-			)
-		}
-	):Play()
-
+	TweenService:Create(gui.barFill, TWEEN_BAR, {Size = UDim2.new(MAX_BAR_WIDTH * alpha, 0, BAR_HEIGHT, 0)}):Play()
 	gui.awardedOfTotal.Text = string.format("%d / %d", owned, total)
 	gui.remainingBadges.Text = string.format("%d Remaining", total - owned)
 end
@@ -542,15 +459,9 @@ end
 -- MAIN FLOW
 --============================================================
 local function processPlayer(player)
-	while not listLoaded do
-		task.wait(0.5)
-	end
-
+	while not listLoaded do task.wait(0.5) end
 	local gui = createGui(player)
-
-	if not gui then
-		return
-	end
+	if not gui then return end
 
 	setPhase(gui, "Waiting...", "Loading game data...")
 
@@ -565,21 +476,12 @@ local function processPlayer(player)
 		end
 	end
 
-	local nextPlaceId = (
-		currentIndex and currentIndex < #gameList
-	) and gameList[currentIndex + 1].placeId or nil
-
-	gui.gameTracker.Text = string.format(
-		"Game %d of %d",
-		currentIndex or 1,
-		#gameList > 0 and #gameList or 1
-	)
+	local nextPlaceId = (currentIndex and currentIndex < #gameList) and gameList[currentIndex + 1].placeId or nil
+	gui.gameTracker.Text = string.format("Game %d of %d", currentIndex or 1, #gameList > 0 and #gameList or 1)
 
 	local joinData = player:GetJoinData()
 	local teleportData = joinData and joinData.TeleportData or {}
-
 	local alreadyAwarded = {}
-
 	if teleportData.awardedIds then
 		for _, id in ipairs(teleportData.awardedIds) do
 			alreadyAwarded[tostring(id)] = true
@@ -587,9 +489,8 @@ local function processPlayer(player)
 	end
 
 	setPhase(gui, "Loading badges...", "Loading chain data...")
-
 	local badges = fetchBadgesForUniverse(currentUniverse)
-
+	
 	if not badges then
 		setPhase(gui, "Error", "Failed to load badges. Rejoin.")
 		return
@@ -600,128 +501,62 @@ local function processPlayer(player)
 	local total = #badges
 
 	setPhase(gui, "Checking badges...", "Syncing inventory...")
-
+	
 	for _, badge in ipairs(badges) do
 		if alreadyAwarded[tostring(badge.id)] then
 			ownedCount += 1
 		else
 			local has = false
-
-			local ok, result = pcall(function()
-				return BadgeService:UserHasBadgeAsync(
-					player.UserId,
-					badge.id
-				)
-			end)
-
+			local ok, result = pcall(function() return BadgeService:UserHasBadgeAsync(player.UserId, badge.id) end)
 			if ok and result then
 				has = true
 				ownedCount += 1
 			end
-
-			if not has then
-				table.insert(toAward, badge)
-			end
+			if not has then table.insert(toAward, badge) end
 		end
 	end
 
 	updateProgress(gui, ownedCount, total)
-
 	task.wait(1.5)
 
 	-- Award Loop
 	for _, badge in ipairs(toAward) do
-		if not player.Parent then
-			return
-		end
+		if not player.Parent then return end
 
-		local success, err = pcall(function()
-			return BadgeService:AwardBadgeAsync(
-				player.UserId,
-				badge.id
-			)
-		end)
-
+		local success, err = pcall(function() return BadgeService:AwardBadgeAsync(player.UserId, badge.id) end)
+		
 		if success then
 			ownedCount += 1
 			alreadyAwarded[tostring(badge.id)] = true
-
-			setPhase(
-				gui,
-				"Awarding badges...",
-				"Awarded Badge: " .. tostring(badge.id)
-			)
-
+			setPhase(gui, "Awarding badges...", "Awarded Badge: " .. tostring(badge.id))
 			updateProgress(gui, ownedCount, total)
 		else
 			if isRateLimitError(err) then
 				setPhase(gui, "Switching servers...", "Rate limited...")
-
 				task.wait(1.5)
-
-				local saveData = {
-					awardedIds = {},
-					fromChain = true
-				}
-
-				for id in pairs(alreadyAwarded) do
-					table.insert(saveData.awardedIds, tonumber(id))
-				end
-
-				pcall(function()
-					TeleportService:Teleport(
-						currentPlace,
-						player,
-						saveData
-					)
-				end)
-
+				local saveData = { awardedIds = {}, fromChain = true }
+				for id in pairs(alreadyAwarded) do table.insert(saveData.awardedIds, tonumber(id)) end
+				pcall(function() TeleportService:Teleport(currentPlace, player, saveData) end)
 				return
 			end
 		end
-
 		task.wait(AWARD_DELAY)
 	end
 
 	updateProgress(gui, total, total)
 
 	if nextPlaceId then
-		setPhase(
-			gui,
-			"Awarded all badges in this game!",
-			"Teleporting to the next..."
-		)
-
+		setPhase(gui, "Awarded all badges in this game!", "Teleporting to the next...")
 		task.wait(2)
-
 		while player.Parent do
-			pcall(function()
-				TeleportService:Teleport(
-					nextPlaceId,
-					player,
-					{
-						fromChain = true
-					}
-				)
-			end)
-
+			pcall(function() TeleportService:Teleport(nextPlaceId, player, { fromChain = true }) end)
 			task.wait(2.5)
 		end
 	else
-		setPhase(
-			gui,
-			"Come back tomorrow for more badges!",
-			"Chain complete!"
-		)
-
+		setPhase(gui, "Come back tomorrow for more badges!", "Chain complete!")
 		gui.remainingBadges.Text = "All badges awarded in every game!"
 	end
 end
 
-Players.PlayerAdded:Connect(function(player)
-	task.spawn(processPlayer, player)
-end)
-
-for _, player in ipairs(Players:GetPlayers()) do
-	task.spawn(processPlayer, player)
-end
+Players.PlayerAdded:Connect(function(player) task.spawn(processPlayer, player) end)
+for _, player in ipairs(Players:GetPlayers()) do task.spawn(processPlayer, player) end
