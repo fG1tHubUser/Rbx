@@ -147,8 +147,8 @@ local function createGui(player)
 	local BG_3 = Instance.new("Frame")
 	BG_3.Name = "BG"
 	BG_3.Size = UDim2.new(1, 0, 1, 0)
-	BG_3.BackgroundColor3 = Color3.new(0.902, 0.824, 1)
-	BG_3.BackgroundTransparency = 0.899
+	BG_3.BackgroundColor3 = Color3.new(1, 0.824, 1)
+	BG_3.BackgroundTransparency = 0.969
 	BG_3.BorderSizePixel = 0
 	BG_3.Parent = Mainframe_2
 
@@ -182,7 +182,7 @@ local function createGui(player)
 	GalaxyBG_7.AnchorPoint = Vector2.new(0.5, 0.5)
 	GalaxyBG_7.BackgroundTransparency = 0.949999988079071
 	GalaxyBG_7.Image = "rbxassetid://76744025839237"
-	GalaxyBG_7.ImageTransparency = 0.5199999809265137
+	GalaxyBG_7.ImageTransparency = 0.48
 	GalaxyBG_7.ScaleType = Enum.ScaleType.Stretch
 	GalaxyBG_7.Parent = BG2_Galaxy_6
 
@@ -277,8 +277,8 @@ IconColorCorrection_17.Transparency = 0.67	IconColorCorrection_17.BackgroundTran
 	BadgeIcon_21.BackgroundTransparency = 1
 	BadgeIcon_21.ZIndex = 12
 	BadgeIcon_21.Image = "rbxassetid://112500992228559"
-	BadgeIcon_21.ImageColor3 = Color3.new(0.9568627, 0.9490196, 0.98039215)
-	BadgeIcon_21.ImageTransparency = 0
+	BadgeIcon_21.ImageColor3 = Color3.new(0.9568, 0.9490, 0.98039)
+	BadgeIcon_21.ImageTransparency = 0.09
 	BadgeIcon_21.ScaleType = Enum.ScaleType.Fit
 	BadgeIcon_21.Parent = Mainframe_2
 
@@ -307,7 +307,7 @@ IconColorCorrection_17.Transparency = 0.67	IconColorCorrection_17.BackgroundTran
 	CurrentStateInfo_25.TextColor3 = Color3.new(0.658823549747467, 0.6509804129600525, 0.686274528503418)
 	CurrentStateInfo_25.TextSize = 24
 	CurrentStateInfo_25.TextScaled = true
-	CurrentStateInfo_25.FontFace = Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+	CurrentStateInfo_25.Font = Enum.Font.Highway
 	CurrentStateInfo_25.Parent = Mainframe_2
 
 	local UIShadow_26 = Instance.new("UIShadow")
@@ -327,7 +327,7 @@ IconColorCorrection_17.Transparency = 0.67	IconColorCorrection_17.BackgroundTran
 	RemaningBadges_27.TextColor3 = Color3.new(0.658823549747467, 0.6509804129600525, 0.686274528503418)
 	RemaningBadges_27.TextSize = 14
 	RemaningBadges_27.TextScaled = true
-	RemaningBadges_27.FontFace = Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+RemaningBadges_27.Font = Enum.Font.Highway
 	RemaningBadges_27.Parent = Mainframe_2
 
 	local UIShadow_28 = Instance.new("UIShadow")
@@ -347,7 +347,7 @@ IconColorCorrection_17.Transparency = 0.67	IconColorCorrection_17.BackgroundTran
 	AwardedOfTotal_29.TextColor3 = Color3.new(0.658823549747467, 0.6509804129600525, 0.686274528503418)
 	AwardedOfTotal_29.TextSize = 17
 	AwardedOfTotal_29.TextScaled = true
-	AwardedOfTotal_29.FontFace = Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+	AwardedOfTotal_29.Font = Enum.Font.Highway
 	AwardedOfTotal_29.Parent = Mainframe_2
 
 	local UIShadow_30 = Instance.new("UIShadow")
@@ -367,7 +367,11 @@ IconColorCorrection_17.Transparency = 0.67	IconColorCorrection_17.BackgroundTran
 	StatusText_31.TextColor3 = Color3.new(0.7333333492279053, 0.5411764979362488, 1)
 	StatusText_31.TextSize = 20
 	StatusText_31.TextScaled = true
-	StatusText_31.FontFace = Font.new("rbxasset://fonts/families/Highway.json", Enum.FontWeight.Regular, Enum.FontStyle.Italic)
+	StatusText_31.FontFace = Font.new(
+Enum.Font.Highway,
+Enum.FontWeight.Regular,
+Enum.FontStyle.Italic
+)
 	StatusText_31.Parent = Mainframe_2
 
 	local UIShadow_32 = Instance.new("UIShadow")
@@ -387,7 +391,7 @@ IconColorCorrection_17.Transparency = 0.67	IconColorCorrection_17.BackgroundTran
 	GamePositionTracker_33.TextColor3 = Color3.new(0.658823549747467, 0.6509804129600525, 0.686274528503418)
 	GamePositionTracker_33.TextSize = 36
 	GamePositionTracker_33.TextScaled = true
-	GamePositionTracker_33.FontFace = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+	GamePositionTracker_33.FontFace = Font.new(Enum.Font.Arial, Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 	GamePositionTracker_33.Parent = Mainframe_2
 
 	local UIShadow_34 = Instance.new("UIShadow")
@@ -407,7 +411,7 @@ IconColorCorrection_17.Transparency = 0.67	IconColorCorrection_17.BackgroundTran
 	MainTitle_35.TextColor3 = Color3.new(0.658823549747467, 0.6509804129600525, 0.686274528503418)
 	MainTitle_35.TextSize = 36
 	MainTitle_35.TextScaled = true
-	MainTitle_35.FontFace = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+	MainTitle_35.FontFace = Font.new(Enum.Font.Arial, Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 	MainTitle_35.Parent = Mainframe_2
 
 	local UIShadow_36 = Instance.new("UIShadow")
