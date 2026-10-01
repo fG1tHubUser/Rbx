@@ -6,7 +6,7 @@ local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 
 local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/ID-List-F3B-Chain-2"
-local AWARD_DELAY = 0.1
+local AWARD_DELAY = 0.069
 local RATE_LIMIT_KEYWORDS = { "rate limit", "too many requests", "429", "throttle", "flood" }
 
 local MAX_BAR_WIDTH = 0.5630570650100708
@@ -251,7 +251,7 @@ local function createGui(player)
 	IconColorCorrection_17.BackgroundTransparency = 1
 	IconColorCorrection_17.ZIndex = 12
 	IconColorCorrection_17.Image = "rbxassetid://112500992228559"
-	IconColorCorrection_17.ImageColor3 = Color3.new(1, 0.917647123336792, 0.027450982481241226)
+	IconColorCorrection_17.ImageColor3 = Color3.new(0.4392157, 0.2588235, 0.3411765)
 	IconColorCorrection_17.ScaleType = Enum.ScaleType.Fit
 	IconColorCorrection_17.Parent = Mainframe_2
 
