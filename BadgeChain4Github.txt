@@ -153,7 +153,12 @@ local function createGui(player)
 	BG_3.Parent = Mainframe_2
 
 	local UIGradient_4 = Instance.new("UIGradient")
-	UIGradient_4.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.0784313753247261, 0, 0.12156862765550613)), ColorSequenceKeypoint.new(0.5, Color3.new(0.2823529541492462, 0, 0.42352941632270813)), ColorSequenceKeypoint.new(0.9567474126815796, Color3.new(0.2862745225429535, 0, 0.41960784792900085)), ColorSequenceKeypoint.new(1, Color3.new(0.062745101749897, 0, 0.0941176488995552))})
+	UIGradient_4.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 2, 28)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(54, 13, 112)),
+		ColorSequenceKeypoint.new(0.9567474126815796, Color3.fromRGB(64, 18, 132)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 2, 23))
+	})
 	UIGradient_4.Rotation = 90
 	UIGradient_4.Parent = BG_3
 
@@ -187,7 +192,12 @@ local function createGui(player)
 	GalaxyBG_7.Parent = BG2_Galaxy_6
 
 	local UIGradient_8 = Instance.new("UIGradient")
-	UIGradient_8.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.0784313753247261, 0, 0.12156862765550613)), ColorSequenceKeypoint.new(0.5, Color3.new(0.2823529541492462, 0, 0.42352941632270813)), ColorSequenceKeypoint.new(0.9567474126815796, Color3.new(0.2862745225429535, 0, 0.41960784792900085)), ColorSequenceKeypoint.new(1, Color3.new(0.062745101749897, 0, 0.0941176488995552))})
+	UIGradient_8.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 2, 28)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(54, 13, 112)),
+		ColorSequenceKeypoint.new(0.9567474126815796, Color3.fromRGB(64, 18, 132)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 2, 23))
+	})
 	UIGradient_8.Rotation = 90
 	UIGradient_8.Parent = BG2_Galaxy_6
 
@@ -252,7 +262,7 @@ local function createGui(player)
 	IconColorCorrection_17.BackgroundTransparency = 1
 	IconColorCorrection_17.ZIndex = 12
 	IconColorCorrection_17.Image = "rbxassetid://112500992228559"
-	IconColorCorrection_17.ImageColor3 = Color3.new(0.4392157, 0.2588235, 0.3411765)
+	IconColorCorrection_17.ImageColor3 = Color3.fromRGB(54, 25, 118)
 	IconColorCorrection_17.ScaleType = Enum.ScaleType.Fit
 	IconColorCorrection_17.Parent = Mainframe_2
 
