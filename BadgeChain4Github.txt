@@ -147,8 +147,8 @@ local function createGui(player)
 	local BG_3 = Instance.new("Frame")
 	BG_3.Name = "BG"
 	BG_3.Size = UDim2.new(1, 0, 1, 0)
-	BG_3.BackgroundColor3 = Color3.new(0.20000000298023224, 0, 0.30980393290519714)
-	BG_3.BackgroundTransparency = 0.6499999761581421
+	BG_3.BackgroundColor3 = Color3.new(0.902, 0.824, 1)
+	BG_3.BackgroundTransparency = 0.899
 	BG_3.BorderSizePixel = 0
 	BG_3.Parent = Mainframe_2
 
