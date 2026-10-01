@@ -249,7 +249,11 @@ local function createGui(player)
 	UICorner_15.Parent = BarFill_14
 
 	local UIGradient_16 = Instance.new("UIGradient")
-	UIGradient_16.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.1764705926179886, 0.05098039284348488, 0.29411765933036804)), ColorSequenceKeypoint.new(0.5051903128623962, Color3.new(0.5925096869468689, 0.5304158926010132, 0.6507225632667542)), ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))})
+	UIGradient_16.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.new(0.1764705926179886, 0.05098039284348488, 0.29411765933036804)),
+		ColorSequenceKeypoint.new(0.5051903128623962, Color3.new(0.5925096869468689, 0.5304158926010132, 0.6507225632667542)),
+		ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
+	})
 	UIGradient_16.Rotation = -90
 	UIGradient_16.Parent = BarFill_14
 
@@ -258,11 +262,11 @@ local function createGui(player)
 	IconColorCorrection_17.Size = UDim2.new(0.17352384328842163, 0, 0.31255286931991577, 0)
 	IconColorCorrection_17.Position = UDim2.new(0.49862879514694214, 0, 0.4380945861339569, 0)
 	IconColorCorrection_17.AnchorPoint = Vector2.new(0.5, 0.5)
-	IconColorCorrection_17.Transparency = 0.67
+	IconColorCorrection_17.Transparency = 0.78
 	IconColorCorrection_17.BackgroundTransparency = 1
 	IconColorCorrection_17.ZIndex = 12
 	IconColorCorrection_17.Image = "rbxassetid://112500992228559"
-	IconColorCorrection_17.ImageColor3 = Color3.fromRGB(54, 25, 118)
+	IconColorCorrection_17.ImageColor3 = Color3.fromRGB(83, 43, 175)
 	IconColorCorrection_17.ScaleType = Enum.ScaleType.Fit
 	IconColorCorrection_17.Parent = Mainframe_2
 
@@ -288,7 +292,7 @@ local function createGui(player)
 	BadgeIcon_21.BackgroundTransparency = 1
 	BadgeIcon_21.ZIndex = 12
 	BadgeIcon_21.Image = "rbxassetid://112500992228559"
-	BadgeIcon_21.ImageColor3 = Color3.new(0.9568, 0.9490, 0.98039)
+	BadgeIcon_21.ImageColor3 = Color3.fromRGB(224, 217, 245)
 	BadgeIcon_21.ImageTransparency = 0.09
 	BadgeIcon_21.ScaleType = Enum.ScaleType.Fit
 	BadgeIcon_21.Parent = Mainframe_2
