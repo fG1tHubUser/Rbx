@@ -9,8 +9,6 @@ local SoundService = game:GetService("SoundService")
 --============================================================
 -- MUTE LOADER SOUND
 --============================================================
--- Deletes the loader's sound immediately so it can't be 
--- played 5 seconds later by the place's local script.
 local fetchSound = SoundService:FindFirstChild("FetchSuccess")
 if fetchSound then
 	fetchSound:Destroy()
@@ -113,7 +111,7 @@ end
 task.spawn(loadGameList)
 
 --============================================================
--- BADGE LOADING
+-- BADGE LOADING & BATCH OWNERSHIP CHECK
 --============================================================
 
 local function fetchBadgesForUniverse(universeId)
@@ -140,7 +138,6 @@ local function fetchBadgesForUniverse(universeId)
 				universeId,
 				cursor and ("&cursor=" .. HttpService:UrlEncode(cursor)) or ""
 			)
-
 			success, response = pcall(function()
 				return HttpService:GetAsync(url, true)
 			end)
@@ -161,9 +158,7 @@ local function fetchBadgesForUniverse(universeId)
 		if data.data then
 			for _, badge in ipairs(data.data) do
 				if badge.id and badge.enabled ~= false then
-					table.insert(all, {
-						id = badge.id
-					})
+					table.insert(all, { id = badge.id })
 				end
 			end
 		end
@@ -180,15 +175,46 @@ local function fetchBadgesForUniverse(universeId)
 	return all
 end
 
+local function fetchOwnedBadgesBatch(userId, badgeIds)
+	local owned = {}
+	if #badgeIds == 0 then return owned end
+
+	local chunks = {}
+	for i = 1, #badgeIds, 100 do
+		local chunk = {}
+		for j = i, math.min(i + 99, #badgeIds) do
+			table.insert(chunk, badgeIds[j])
+		end
+		table.insert(chunks, chunk)
+	end
+
+	for _, chunk in ipairs(chunks) do
+		local url = string.format("https://badges.roproxy.com/v1/users/%d/badges/awarded-dates?badgeIds=%s", userId, table.concat(chunk, ","))
+		
+		for attempt = 1, 3 do
+			local success, response = pcall(function() return HttpService:GetAsync(url, true) end)
+			if success then
+				local ok, data = pcall(function() return HttpService:JSONDecode(response) end)
+				if ok and type(data) == "table" and data.data then
+					for _, info in ipairs(data.data) do
+						owned[tostring(info.badgeId)] = true
+					end
+					break
+				end
+			end
+			task.wait(1)
+		end
+	end
+	return owned
+end
+
 local function isRateLimitError(err)
 	local lower = string.lower(tostring(err))
-
 	for _, keyword in ipairs(RATE_LIMIT_KEYWORDS) do
 		if string.find(lower, keyword, 1, true) then
 			return true
 		end
 	end
-
 	return false
 end
 
@@ -198,28 +224,17 @@ end
 
 local function buildAwardedIdList(alreadyAwarded)
 	local awardedIds = {}
-
 	for id in pairs(alreadyAwarded) do
 		local numericId = tonumber(id)
-
-		if numericId then
-			table.insert(awardedIds, numericId)
-		end
+		if numericId then table.insert(awardedIds, numericId) end
 	end
-
 	return awardedIds
 end
 
 local function teleportToNewServer(player, placeId, alreadyAwarded, gui, infoText)
-	if not player or not player.Parent then
-		return false
-	end
+	if not player or not player.Parent then return false end
 
-	setPhase(
-		gui,
-		"Switching servers...",
-		infoText or "Starting a new server..."
-	)
+	setPhase(gui, "Switching servers...", infoText or "Starting a new server...")
 
 	local teleportOptions = Instance.new("TeleportOptions")
 	teleportOptions.ShouldReserveServer = true
@@ -229,11 +244,7 @@ local function teleportToNewServer(player, placeId, alreadyAwarded, gui, infoTex
 	})
 
 	local success, err = pcall(function()
-		TeleportService:TeleportAsync(
-			placeId,
-			{ player },
-			teleportOptions
-		)
+		TeleportService:TeleportAsync(placeId, { player }, teleportOptions)
 	end)
 
 	if not success then
@@ -245,21 +256,13 @@ local function teleportToNewServer(player, placeId, alreadyAwarded, gui, infoTex
 end
 
 local function teleportToNextGame(player, placeId)
-	if not player or not player.Parent then
-		return false
-	end
+	if not player or not player.Parent then return false end
 
 	local teleportOptions = Instance.new("TeleportOptions")
-	teleportOptions:SetTeleportData({
-		fromChain = true
-	})
+	teleportOptions:SetTeleportData({ fromChain = true })
 
 	local success, err = pcall(function()
-		TeleportService:TeleportAsync(
-			placeId,
-			{ player },
-			teleportOptions
-		)
+		TeleportService:TeleportAsync(placeId, { player }, teleportOptions)
 	end)
 
 	if not success then
@@ -276,10 +279,7 @@ end
 
 local function createGui(player)
 	local playerGui = player:WaitForChild("PlayerGui", 10)
-
-	if not playerGui then
-		return nil
-	end
+	if not playerGui then return nil end
 
 	local MainGui_1 = Instance.new("ScreenGui")
 	MainGui_1.Name = "MainGui"
@@ -620,12 +620,9 @@ setPhase = function(gui, statusStr, infoStr)
 end
 
 updateProgress = function(gui, owned, total)
-	if not gui then
-		return
-	end
+	if not gui then return end
 
 	local alpha = 0
-
 	if total > 0 then
 		alpha = math.clamp(owned / total, 0, 1)
 	end
@@ -633,9 +630,7 @@ updateProgress = function(gui, owned, total)
 	TweenService:Create(
 		gui.barFill,
 		TWEEN_BAR,
-		{
-			Size = UDim2.new(MAX_BAR_WIDTH * alpha, 0, BAR_HEIGHT, 0)
-		}
+		{ Size = UDim2.new(MAX_BAR_WIDTH * alpha, 0, BAR_HEIGHT, 0) }
 	):Play()
 
 	gui.awardedOfTotal.Text = string.format("%d / %d", owned, total)
@@ -643,24 +638,16 @@ updateProgress = function(gui, owned, total)
 end
 
 --============================================================
--- BADGE OWNERSHIP
+-- AWARD ONE BADGE (WITH AVOIDANCE FOR CACHED OWNERSHIP)
 --============================================================
 
 local function checkBadgeOwnership(player, badgeId)
 	local success, hasBadgeOrError = pcall(function()
 		return BadgeService:UserHasBadgeAsync(player.UserId, badgeId)
 	end)
-
-	if not success then
-		return nil, hasBadgeOrError
-	end
-
+	if not success then return nil, hasBadgeOrError end
 	return hasBadgeOrError == true, nil
 end
-
---============================================================
--- AWARD ONE BADGE
---============================================================
 
 local function awardOneBadge(player, badgeId)
 	local lastError = nil
@@ -674,36 +661,25 @@ local function awardOneBadge(player, badgeId)
 			return BadgeService:AwardBadgeAsync(player.UserId, badgeId)
 		end)
 
-		-- Roblox's API can sometimes return nil (void) on success instead of a literal 'true'.
-		-- If callOk is true and awardResult is not explicitly false, assume it was successfully awarded.
 		if callOk and awardResult ~= false then
-			return true, nil
+			return true, "AWARDED" -- Genuinely newly awarded
 		end
 
 		if not callOk then
 			lastError = awardResult
-
-			warn(
-				"[BadgeChain] AwardBadgeAsync error for badge",
-				badgeId,
-				"attempt",
-				attempt,
-				":",
-				tostring(awardResult)
-			)
-
+			warn("[BadgeChain] AwardBadgeAsync error for badge", badgeId, "attempt", attempt, ":", tostring(awardResult))
+			
 			if isRateLimitError(awardResult) then
 				return false, "RATE_LIMIT"
 			end
 		else
-			lastError = "AwardBadgeAsync returned false"
-			warn("[BadgeChain] Badge", badgeId, "was NOT awarded. AwardBadgeAsync returned false.")
+			lastError = "AwardBadgeAsync returned false (Likely already owned)"
 		end
 
+		-- Verify ownership as a fallback
 		local ownership, ownershipError = checkBadgeOwnership(player, badgeId)
-
 		if ownership == true then
-			return true, nil
+			return true, "ALREADY_OWNED"
 		end
 
 		if attempt < MAX_FAILED_ATTEMPTS then
@@ -719,15 +695,10 @@ end
 --============================================================
 
 local function processPlayer(player)
-	while not listLoaded do
-		task.wait(0.5)
-	end
+	while not listLoaded do task.wait(0.5) end
 
 	local gui = createGui(player)
-
-	if not gui then
-		return
-	end
+	if not gui then return end
 
 	setPhase(gui, "Waiting...", "Loading data...")
 
@@ -744,15 +715,7 @@ local function processPlayer(player)
 
 	local nextPlaceId = (currentIndex and currentIndex < #gameList) and gameList[currentIndex + 1].placeId or nil
 
-	gui.gameTracker.Text = string.format(
-		"Game %d of %d",
-		currentIndex or 1,
-		#gameList > 0 and #gameList or 1
-	)
-
-	--========================================================
-	-- RECOVER TELEPORT DATA
-	--========================================================
+	gui.gameTracker.Text = string.format("Game %d of %d", currentIndex or 1, #gameList > 0 and #gameList or 1)
 
 	local joinData = player:GetJoinData()
 	local teleportData = joinData and joinData.TeleportData or {}
@@ -764,12 +727,7 @@ local function processPlayer(player)
 		end
 	end
 
-	--========================================================
-	-- LOAD BADGES
-	--========================================================
-
 	setPhase(gui, "Loading badges...", "Loading data...")
-
 	local badges = fetchBadgesForUniverse(currentUniverse)
 
 	if not badges then
@@ -777,64 +735,44 @@ local function processPlayer(player)
 		return
 	end
 
-	--========================================================
-	-- CHECK OWNERSHIP
-	--========================================================
-
 	local toAward = {}
 	local ownedCount = 0
 	local total = #badges
 
-	setPhase(gui, "Checking badges...", "Syncing inventory...")
+	setPhase(gui, "Checking badges...", "Syncing inventory (Web API)...")
 
+	-- Build list of unverified badge IDs to batch-check
+	local badgeIdsToVerify = {}
 	for _, badge in ipairs(badges) do
 		if alreadyAwarded[tostring(badge.id)] then
 			ownedCount += 1
 		else
-			local hasBadge, checkError = checkBadgeOwnership(player, badge.id)
+			table.insert(badgeIdsToVerify, badge.id)
+		end
+	end
 
-			if hasBadge == true then
-				ownedCount += 1
-			elseif hasBadge == false then
-				table.insert(toAward, badge)
-			else
-				warn(
-					"[BadgeChain] Could not verify ownership of badge",
-					badge.id,
-					":",
-					tostring(checkError)
-				)
-				table.insert(toAward, badge)
-			end
+	-- Check ownership via Web API completely bypassing BadgeService limits
+	local webOwned = fetchOwnedBadgesBatch(player.UserId, badgeIdsToVerify)
+
+	for _, badgeId in ipairs(badgeIdsToVerify) do
+		if webOwned[tostring(badgeId)] then
+			ownedCount += 1
+		else
+			table.insert(toAward, { id = badgeId })
 		end
 	end
 
 	updateProgress(gui, ownedCount, total)
 	task.wait(1)
 
-	--========================================================
-	-- AWARD LOOP
-	--========================================================
-
 	local awardsThisServer = 0
 
 	for _, badge in ipairs(toAward) do
-		if not player.Parent then
-			return
-		end
+		if not player.Parent then return end
 
 		if awardsThisServer >= AWARDS_PER_SERVER then
-			local teleported = teleportToNewServer(
-				player,
-				currentPlace,
-				alreadyAwarded,
-				gui,
-				string.format("%d badges awarded. Starting a new server...", AWARDS_PER_SERVER)
-			)
-
-			if teleported then
-				return
-			end
+			local teleported = teleportToNewServer(player, currentPlace, alreadyAwarded, gui, string.format("%d badges awarded. Starting a new server...", AWARDS_PER_SERVER))
+			if teleported then return end
 
 			task.wait(2)
 			local retryTeleport = teleportToNewServer(player, currentPlace, alreadyAwarded, gui, "Retrying...")
@@ -844,30 +782,26 @@ local function processPlayer(player)
 			continue
 		end
 
-		local awarded, awardError = awardOneBadge(player, badge.id)
+		local awarded, status = awardOneBadge(player, badge.id)
 
 		if awarded then
 			ownedCount += 1
-			awardsThisServer += 1
 			alreadyAwarded[tostring(badge.id)] = true
 
-			setPhase(gui, "Awarding badges...", string.format("Awarded Badge: %s", tostring(badge.id)))
+			-- ONLY count towards the 85-limit if it was a genuine new award, NOT a skipped owned badge
+			if status == "AWARDED" then
+				awardsThisServer += 1
+				setPhase(gui, "Awarding badges...", string.format("Awarded Badge: %s", tostring(badge.id)))
+			else
+				setPhase(gui, "Syncing...", "Badge already owned.")
+			end
+
 			updateProgress(gui, ownedCount, total)
 
 			if awardsThisServer >= AWARDS_PER_SERVER then
 				task.wait(0.2)
-
-				local teleported = teleportToNewServer(
-					player,
-					currentPlace,
-					alreadyAwarded,
-					gui,
-					"Moving to a new server..."
-				)
-
-				if teleported then
-					return
-				end
+				local teleported = teleportToNewServer(player, currentPlace, alreadyAwarded, gui, "Moving to a new server...")
+				if teleported then return end
 
 				while player.Parent do
 					task.wait(2)
@@ -877,17 +811,9 @@ local function processPlayer(player)
 				return
 			end
 		else
-			warn(
-				string.format(
-					"[BadgeChain] Badge %s failed to award (%s). Skipping for now.",
-					tostring(badge.id),
-					tostring(awardError)
-				)
-			)
+			warn(string.format("[BadgeChain] Badge %s failed to award (%s). Skipping for now.", tostring(badge.id), tostring(status)))
 			
-			-- If the script hits a hard rate limit, it must pause. 
-			-- Instantly skipping to the next badge would just cause every subsequent badge to fail as well.
-			if awardError == "RATE_LIMIT" then
+			if status == "RATE_LIMIT" then
 				setPhase(gui, "Rate Limited", "Pausing 60s for API reset...")
 				warn("[BadgeChain] Rate limit hit. Pausing for 60 seconds before continuing to prevent mass failures.")
 				task.wait(60)
@@ -896,10 +822,6 @@ local function processPlayer(player)
 
 		task.wait(AWARD_DELAY)
 	end
-
-	--========================================================
-	-- ALL BADGES IN CURRENT GAME COMPLETE
-	--========================================================
 
 	updateProgress(gui, total, total)
 
