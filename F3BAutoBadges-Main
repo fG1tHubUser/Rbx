@@ -111,7 +111,7 @@ end
 task.spawn(loadGameList)
 
 --============================================================
--- BADGE LOADING
+-- BADGE LOADING & BATCH INVENTORY CHECK
 --============================================================
 
 local function fetchBadgesForUniverse(universeId)
@@ -173,6 +173,40 @@ local function fetchBadgesForUniverse(universeId)
 	end
 
 	return all
+end
+
+-- Completely bypasses BadgeService read limits by batch-checking via proxy
+local function fetchOwnedBadgesBatch(userId, badgeIds)
+	local owned = {}
+	if #badgeIds == 0 then return owned end
+
+	local chunks = {}
+	for i = 1, #badgeIds, 100 do
+		local chunk = {}
+		for j = i, math.min(i + 99, #badgeIds) do
+			table.insert(chunk, badgeIds[j])
+		end
+		table.insert(chunks, chunk)
+	end
+
+	for _, chunk in ipairs(chunks) do
+		local url = string.format("https://badges.roproxy.com/v1/users/%d/badges/awarded-dates?badgeIds=%s", userId, table.concat(chunk, ","))
+		
+		for attempt = 1, 3 do
+			local success, response = pcall(function() return HttpService:GetAsync(url, true) end)
+			if success then
+				local ok, data = pcall(function() return HttpService:JSONDecode(response) end)
+				if ok and type(data) == "table" and data.data then
+					for _, info in ipairs(data.data) do
+						owned[tostring(info.badgeId)] = true
+					end
+					break
+				end
+			end
+			task.wait(1)
+		end
+	end
+	return owned
 end
 
 local function isRateLimitError(err)
@@ -605,7 +639,7 @@ updateProgress = function(gui, owned, total)
 end
 
 --============================================================
--- AWARD ONE BADGE
+-- AWARD ONE BADGE (ONLY RUNS FOR UNOWNED BADGES)
 --============================================================
 
 local function awardOneBadge(player, badgeId)
@@ -613,21 +647,16 @@ local function awardOneBadge(player, badgeId)
 
 	for attempt = 1, MAX_FAILED_ATTEMPTS do
 		if not player or not player.Parent then
-			return nil, "LEFT"
+			return false, "LEFT"
 		end
 
 		local callOk, awardResult = pcall(function()
 			return BadgeService:AwardBadgeAsync(player.UserId, badgeId)
 		end)
 
-		if callOk then
-			if awardResult == true then
-				return true, nil
-			else
-				-- A 'false' here means Roblox determined you own it or it's disabled.
-				return false, nil 
-			end
-		else
+		if callOk and awardResult == true then
+			return true, nil
+		elseif not callOk then
 			lastError = awardResult
 			warn(string.format("[BadgeChain] Award error for badge %s (Attempt %d): %s", tostring(badgeId), attempt, tostring(awardResult)))
 			
@@ -694,50 +723,65 @@ local function processPlayer(player)
 	setPhase(gui, "Checking badges...", "Syncing inventory...")
 
 	--========================================================
-	-- SILENT BACKGROUND SWEEP (WITH RETRY PROTECTION)
+	-- BATCH OWNERSHIP SWEEP (BYPASSES ROBLOX LIMITS)
 	--========================================================
-	for i, badge in ipairs(badges) do
+	local badgeIdsToVerify = {}
+	for _, badge in ipairs(badges) do
 		if alreadyAwarded[tostring(badge.id)] then
 			ownedCount += 1
 		else
-			local success = false
-			local hasBadge = false
-			
-			-- If Roblox's internal read API throttles, safely retry instead of giving up
-			-- and incorrectly dumping the badge into the award queue.
-			while not success do
-				success, hasBadge = pcall(function()
-					return BadgeService:UserHasBadgeAsync(player.UserId, badge.id)
-				end)
-				
-				if not success then
-					task.wait(1) 
-				end
-			end
-
-			if hasBadge then
-				ownedCount += 1
-				alreadyAwarded[tostring(badge.id)] = true
-			else
-				table.insert(toAward, badge)
-			end
+			table.insert(badgeIdsToVerify, badge.id)
 		end
+	end
 
-		if i % 25 == 0 then task.wait(0.1) end
+	local webOwned = fetchOwnedBadgesBatch(player.UserId, badgeIdsToVerify)
+
+	for _, badgeId in ipairs(badgeIdsToVerify) do
+		if webOwned[tostring(badgeId)] then
+			ownedCount += 1
+			alreadyAwarded[tostring(badgeId)] = true
+		else
+			table.insert(toAward, { id = badgeId })
+		end
 	end
 
 	--========================================================
-	-- INSTANT PROGRESS BAR JUMP
-	-- Snaps directly to whatever the total owned count is.
+	-- INSTANT JUMP TO OWNED
+	-- Bar instantly sets to current ownership (e.g. 110/110)
 	--========================================================
 	updateProgress(gui, ownedCount, total)
+	
+	-- IF ALREADY OWN EVERYTHING, INSTANTLY TELEPORT
+	if #toAward == 0 then
+		local completeSound = Instance.new("Sound")
+		completeSound.SoundId = "rbxassetid://107978604605265"
+		completeSound.Volume = 0.69
+		completeSound.PlaybackSpeed = 0.5
+		completeSound.Parent = gui.screen
+		completeSound:Play()
+
+		if nextPlaceId then
+			setPhase(gui, "Awarded all badges in this game!", "Teleporting to the next...")
+			task.wait(2)
+			while player.Parent do
+				local teleported = teleportToNextGame(player, nextPlaceId)
+				if teleported then return end
+				task.wait(2.5)
+			end
+		else
+			setPhase(gui, "Come back tomorrow for more badges!", "Chain complete!")
+			gui.remainingBadges.Text = "All badges awarded in every game!"
+		end
+		return
+	end
+
 	task.wait(0.5)
 
+	--========================================================
+	-- AWARD LOOP (ONLY UNOWNED BADGES)
+	--========================================================
 	local awardsThisServer = 0
 
-	--========================================================
-	-- AWARD LOOP (ONLY CONTAINS UNOWNED BADGES)
-	--========================================================
 	for _, badge in ipairs(toAward) do
 		if not player.Parent then return end
 
@@ -777,12 +821,6 @@ local function processPlayer(player)
 			end
 			
 			task.wait(AWARD_DELAY)
-			
-		elseif status == false then
-			-- Badge was somehow already owned despite the sweep. Instantly skip.
-			ownedCount += 1
-			alreadyAwarded[tostring(badge.id)] = true
-			updateProgress(gui, ownedCount, total)
 			
 		elseif status == nil then
 			if err == "RATE_LIMIT" then
