@@ -4,6 +4,17 @@ local BadgeService = game:GetService("BadgeService")
 local TeleportService = game:GetService("TeleportService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
+local SoundService = game:GetService("SoundService")
+
+--============================================================
+-- MUTE LOADER SOUND
+--============================================================
+-- Deletes the loader's sound immediately so it can't be 
+-- played 5 seconds later by the place's local script.
+local fetchSound = SoundService:FindFirstChild("FetchSuccess")
+if fetchSound then
+	fetchSound:Destroy()
+end
 
 local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/universe-place-ids.txt"
 
@@ -11,21 +22,8 @@ local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/
 -- BADGE AWARD SETTINGS
 --============================================================
 
--- Roblox's documented server-side badge award limit is:
--- 50 + 35 * number of users in the server per minute.
---
--- With one player:
--- 50 + 35 * 1 = 85
---
--- We intentionally use 85 even if more players join.
--- This keeps the chain conservative and guarantees that
--- this script leaves before trying to push past the limit.
 local AWARDS_PER_SERVER = 85
-
--- Delay between successful award attempts.
 local AWARD_DELAY = 0.069
-
--- Number of times to retry an award that does not succeed.
 local MAX_FAILED_ATTEMPTS = 3
 
 local RATE_LIMIT_KEYWORDS = {
@@ -40,7 +38,6 @@ local MAX_BAR_WIDTH = 0.5630570650100708
 local BAR_HEIGHT = 0.03726167604327202
 local TWEEN_BAR = TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
--- Forward declarations.
 local setPhase
 local updateProgress
 
@@ -225,13 +222,7 @@ local function teleportToNewServer(player, placeId, alreadyAwarded, gui, infoTex
 	)
 
 	local teleportOptions = Instance.new("TeleportOptions")
-
-	-- IMPORTANT:
-	-- This creates a NEW reserved server allocation.
-	-- It does not intentionally send the player back
-	-- to the current public server.
 	teleportOptions.ShouldReserveServer = true
-
 	teleportOptions:SetTeleportData({
 		awardedIds = buildAwardedIdList(alreadyAwarded),
 		fromChain = true
@@ -259,7 +250,6 @@ local function teleportToNextGame(player, placeId)
 	end
 
 	local teleportOptions = Instance.new("TeleportOptions")
-
 	teleportOptions:SetTeleportData({
 		fromChain = true
 	})
@@ -310,18 +300,10 @@ local function createGui(player)
 	Mainframe_2.Size = UDim2.new(1, 0, 1, 0)
 	Mainframe_2.Position = UDim2.new(0, 0, 0, 0)
 	Mainframe_2.AnchorPoint = Vector2.new(0, 0)
-	Mainframe_2.BackgroundColor3 = Color3.new(
-		0.20000000298023224,
-		0,
-		0.30980393290519714
-	)
+	Mainframe_2.BackgroundColor3 = Color3.new(0.2, 0, 0.309)
 	Mainframe_2.BackgroundTransparency = 1
 	Mainframe_2.BorderSizePixel = 0
-	Mainframe_2.BorderColor3 = Color3.new(
-		0.10588235408067703,
-		0.16470588743686676,
-		0.2078431397676468
-	)
+	Mainframe_2.BorderColor3 = Color3.new(0.105, 0.164, 0.207)
 	Mainframe_2.BorderMode = Enum.BorderMode.Outline
 	Mainframe_2.Visible = true
 	Mainframe_2.ZIndex = 1
@@ -331,52 +313,17 @@ local function createGui(player)
 	local BG_3 = Instance.new("Frame")
 	BG_3.Name = "BG"
 	BG_3.Size = UDim2.new(1, 0, 1, 0)
-	BG_3.BackgroundColor3 = Color3.new(
-		0.32,
-		0.04,
-		0.55
-	)
+	BG_3.BackgroundColor3 = Color3.new(0.32, 0.04, 0.55)
 	BG_3.BackgroundTransparency = 0.969
 	BG_3.BorderSizePixel = 0
 	BG_3.Parent = Mainframe_2
 
 	local UIGradient_4 = Instance.new("UIGradient")
 	UIGradient_4.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(
-			0,
-			Color3.new(
-				0.105882,
-				0.007843,
-				0.180392
-			)
-		),
-
-		ColorSequenceKeypoint.new(
-			0.5,
-			Color3.new(
-				0.384314,
-				0.035294,
-				0.670588
-			)
-		),
-
-		ColorSequenceKeypoint.new(
-			0.9567474126815796,
-			Color3.new(
-				0.352941,
-				0.023529,
-				0.603922
-			)
-		),
-
-		ColorSequenceKeypoint.new(
-			1,
-			Color3.new(
-				0.086275,
-				0.003922,
-				0.149020
-			)
-		)
+		ColorSequenceKeypoint.new(0, Color3.new(0.105, 0.007, 0.18)),
+		ColorSequenceKeypoint.new(0.5, Color3.new(0.384, 0.035, 0.67)),
+		ColorSequenceKeypoint.new(0.956, Color3.new(0.352, 0.023, 0.603)),
+		ColorSequenceKeypoint.new(1, Color3.new(0.086, 0.003, 0.149))
 	})
 	UIGradient_4.Rotation = 90
 	UIGradient_4.Parent = BG_3
@@ -384,16 +331,11 @@ local function createGui(player)
 	local Ambient_5 = Instance.new("ImageLabel")
 	Ambient_5.Name = "Ambient"
 	Ambient_5.Size = UDim2.new(1, 0, 1, 0)
-	Ambient_5.Position = UDim2.new(
-		0.4957035183906555,
-		0,
-		0.5,
-		0
-	)
+	Ambient_5.Position = UDim2.new(0.495, 0, 0.5, 0)
 	Ambient_5.AnchorPoint = Vector2.new(0.5, 0.5)
-	Ambient_5.BackgroundTransparency = 0.949999988079071
+	Ambient_5.BackgroundTransparency = 0.949
 	Ambient_5.Image = "rbxassetid://5028857084"
-	Ambient_5.ImageTransparency = 0.949999988079071
+	Ambient_5.ImageTransparency = 0.949
 	Ambient_5.ScaleType = Enum.ScaleType.Stretch
 	Ambient_5.Parent = BG_3
 
@@ -407,14 +349,9 @@ local function createGui(player)
 	local GalaxyBG_7 = Instance.new("ImageLabel")
 	GalaxyBG_7.Name = "GalaxyBG"
 	GalaxyBG_7.Size = UDim2.new(1, 0, 1, 0)
-	GalaxyBG_7.Position = UDim2.new(
-		0.4999999701976776,
-		0,
-		0.5,
-		0
-	)
+	GalaxyBG_7.Position = UDim2.new(0.5, 0, 0.5, 0)
 	GalaxyBG_7.AnchorPoint = Vector2.new(0.5, 0.5)
-	GalaxyBG_7.BackgroundTransparency = 0.949999988079071
+	GalaxyBG_7.BackgroundTransparency = 0.949
 	GalaxyBG_7.Image = "rbxassetid://76744025839237"
 	GalaxyBG_7.ImageTransparency = 0.38
 	GalaxyBG_7.ScaleType = Enum.ScaleType.Stretch
@@ -422,65 +359,20 @@ local function createGui(player)
 
 	local UIGradient_8 = Instance.new("UIGradient")
 	UIGradient_8.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(
-			0,
-			Color3.new(
-				0.105882,
-				0.007843,
-				0.180392
-			)
-		),
-
-		ColorSequenceKeypoint.new(
-			0.5,
-			Color3.new(
-				0.384314,
-				0.035294,
-				0.670588
-			)
-		),
-
-		ColorSequenceKeypoint.new(
-			0.9567474126815796,
-			Color3.new(
-				0.352941,
-				0.023529,
-				0.603922
-			)
-		),
-
-		ColorSequenceKeypoint.new(
-			1,
-			Color3.new(
-				0.086275,
-				0.003922,
-				0.149020
-			)
-		)
+		ColorSequenceKeypoint.new(0, Color3.new(0.105, 0.007, 0.18)),
+		ColorSequenceKeypoint.new(0.5, Color3.new(0.384, 0.035, 0.67)),
+		ColorSequenceKeypoint.new(0.956, Color3.new(0.352, 0.023, 0.603)),
+		ColorSequenceKeypoint.new(1, Color3.new(0.086, 0.003, 0.149))
 	})
 	UIGradient_8.Rotation = 90
 	UIGradient_8.Parent = BG2_Galaxy_6
 
 	local BarBg_9 = Instance.new("Frame")
 	BarBg_9.Name = "BarBg"
-	BarBg_9.Size = UDim2.new(
-		0.5630570650100708,
-		0,
-		0.038392771035432816,
-		0
-	)
-	BarBg_9.Position = UDim2.new(
-		0.4953286647796631,
-		0,
-		0.733273983001709,
-		0
-	)
+	BarBg_9.Size = UDim2.new(0.563, 0, 0.038, 0)
+	BarBg_9.Position = UDim2.new(0.495, 0, 0.733, 0)
 	BarBg_9.AnchorPoint = Vector2.new(0.5, 0)
-	BarBg_9.BackgroundColor3 = Color3.new(
-		0.09803922474384308,
-		0,
-		0.14901961386203766
-	)
+	BarBg_9.BackgroundColor3 = Color3.new(0.098, 0, 0.149)
 	BarBg_9.BorderSizePixel = 0
 	BarBg_9.ZIndex = 10
 	BarBg_9.Parent = Mainframe_2
@@ -493,24 +385,14 @@ local function createGui(player)
 	UIShadow_11.BlurRadius = UDim.new(0, 30)
 	UIShadow_11.Color = Color3.new(0, 0, 0)
 	UIShadow_11.Transparency = 0.5
-	UIShadow_11.Offset = UDim2.new(
-		0,
-		0,
-		0.009999999776482582,
-		0
-	)
+	UIShadow_11.Offset = UDim2.new(0, 0, 0.009, 0)
 	UIShadow_11.Parent = BarBg_9
 
 	local UIShadow_12 = Instance.new("UIShadow")
 	UIShadow_12.BlurRadius = UDim.new(0, 15)
 	UIShadow_12.Color = Color3.new(0, 0, 0)
-	UIShadow_12.Transparency = 0.3700000047683716
-	UIShadow_12.Offset = UDim2.new(
-		0,
-		0,
-		0.009999999776482582,
-		0
-	)
+	UIShadow_12.Transparency = 0.37
+	UIShadow_12.Offset = UDim2.new(0, 0, 0.009, 0)
 	UIShadow_12.Parent = BarBg_9
 
 	local UIStroke_13 = Instance.new("UIStroke")
@@ -520,87 +402,37 @@ local function createGui(player)
 
 	local BarFill_14 = Instance.new("Frame")
 	BarFill_14.Name = "BarFill"
-	BarFill_14.Size = UDim2.new(
-		0,
-		0,
-		0.03726167604327202,
-		0
-	)
-	BarFill_14.Position = UDim2.new(
-		0.2138000875711441,
-		0,
-		0.733273983001709,
-		0
-	)
+	BarFill_14.Size = UDim2.new(0, 0, 0.037, 0)
+	BarFill_14.Position = UDim2.new(0.213, 0, 0.733, 0)
 	BarFill_14.AnchorPoint = Vector2.new(0, 0)
-	BarFill_14.BackgroundColor3 = Color3.new(
-		0.34117648005485535,
-		0.2196078598499298,
-		0.4862745404243469
-	)
+	BarFill_14.BackgroundColor3 = Color3.new(0.341, 0.219, 0.486)
 	BarFill_14.BorderSizePixel = 0
 	BarFill_14.ZIndex = 11
 	BarFill_14.Parent = Mainframe_2
 
 	local UICorner_15 = Instance.new("UICorner")
-	UICorner_15.CornerRadius = UDim.new(
-		1.100000023841858,
-		0
-	)
+	UICorner_15.CornerRadius = UDim.new(1.1, 0)
 	UICorner_15.Parent = BarFill_14
 
 	local UIGradient_16 = Instance.new("UIGradient")
 	UIGradient_16.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(
-			0,
-			Color3.new(
-				0.1764705926179886,
-				0.05098039284348488,
-				0.29411765933036804
-			)
-		),
-
-		ColorSequenceKeypoint.new(
-			0.5051903128623962,
-			Color3.new(
-				0.5925096869468689,
-				0.5304158926010132,
-				0.6507225632667542
-			)
-		),
-
-		ColorSequenceKeypoint.new(
-			1,
-			Color3.new(1, 1, 1)
-		)
+		ColorSequenceKeypoint.new(0, Color3.new(0.176, 0.05, 0.294)),
+		ColorSequenceKeypoint.new(0.505, Color3.new(0.592, 0.53, 0.65)),
+		ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
 	})
 	UIGradient_16.Rotation = -90
 	UIGradient_16.Parent = BarFill_14
 
 	local IconColorCorrection_17 = Instance.new("ImageLabel")
 	IconColorCorrection_17.Name = "IconColorCorrection"
-	IconColorCorrection_17.Size = UDim2.new(
-		0.17352384328842163,
-		0,
-		0.31255286931991577,
-		0
-	)
-	IconColorCorrection_17.Position = UDim2.new(
-		0.49862879514694214,
-		0,
-		0.4380945861339569,
-		0
-	)
+	IconColorCorrection_17.Size = UDim2.new(0.173, 0, 0.312, 0)
+	IconColorCorrection_17.Position = UDim2.new(0.498, 0, 0.438, 0)
 	IconColorCorrection_17.AnchorPoint = Vector2.new(0.5, 0.5)
 	IconColorCorrection_17.Transparency = 0.67
 	IconColorCorrection_17.BackgroundTransparency = 1
 	IconColorCorrection_17.ZIndex = 12
 	IconColorCorrection_17.Image = "rbxassetid://112500992228559"
-	IconColorCorrection_17.ImageColor3 = Color3.new(
-		0.4392157,
-		0.2588235,
-		0.3411765
-	)
+	IconColorCorrection_17.ImageColor3 = Color3.new(0.439, 0.258, 0.341)
 	IconColorCorrection_17.ScaleType = Enum.ScaleType.Fit
 	IconColorCorrection_17.Parent = Mainframe_2
 
@@ -609,11 +441,7 @@ local function createGui(player)
 	UICorner_18.Parent = IconColorCorrection_17
 
 	local UIStroke_19 = Instance.new("UIStroke")
-	UIStroke_19.Color = Color3.new(
-		0.08235294371843338,
-		0.011764707043766975,
-		0.18431372940540314
-	)
+	UIStroke_19.Color = Color3.new(0.082, 0.011, 0.184)
 	UIStroke_19.Thickness = 3
 	UIStroke_19.Transparency = 5
 	UIStroke_19.Parent = IconColorCorrection_17
@@ -624,27 +452,13 @@ local function createGui(player)
 
 	local BadgeIcon_21 = Instance.new("ImageLabel")
 	BadgeIcon_21.Name = "BadgeIcon"
-	BadgeIcon_21.Size = UDim2.new(
-		0.17352379858493805,
-		0,
-		0.31255286931991577,
-		0
-	)
-	BadgeIcon_21.Position = UDim2.new(
-		0.49862873554229736,
-		0,
-		0.4380945861339569,
-		0
-	)
+	BadgeIcon_21.Size = UDim2.new(0.173, 0, 0.312, 0)
+	BadgeIcon_21.Position = UDim2.new(0.498, 0, 0.438, 0)
 	BadgeIcon_21.AnchorPoint = Vector2.new(0.5, 0.5)
 	BadgeIcon_21.BackgroundTransparency = 1
 	BadgeIcon_21.ZIndex = 12
 	BadgeIcon_21.Image = "rbxassetid://112500992228559"
-	BadgeIcon_21.ImageColor3 = Color3.new(
-		0.9568,
-		0.9490,
-		0.98039
-	)
+	BadgeIcon_21.ImageColor3 = Color3.new(0.956, 0.949, 0.98)
 	BadgeIcon_21.ImageTransparency = 0.09
 	BadgeIcon_21.ScaleType = Enum.ScaleType.Fit
 	BadgeIcon_21.Parent = Mainframe_2
@@ -654,13 +468,9 @@ local function createGui(player)
 	UICorner_22.Parent = BadgeIcon_21
 
 	local UIStroke_23 = Instance.new("UIStroke")
-	UIStroke_23.Color = Color3.new(
-		0.054901961237192154,
-		0,
-		0.08235294117647059
-	)
+	UIStroke_23.Color = Color3.new(0.054, 0, 0.082)
 	UIStroke_23.Thickness = 2.5
-	UIStroke_23.Transparency = 0.3499999940395355
+	UIStroke_23.Transparency = 0.349
 	UIStroke_23.Parent = BadgeIcon_21
 
 	local UIAspectRatioConstraint_24 = Instance.new("UIAspectRatioConstraint")
@@ -669,27 +479,13 @@ local function createGui(player)
 
 	local CurrentStateInfo_25 = Instance.new("TextLabel")
 	CurrentStateInfo_25.Name = "CurrentStateInfo"
-	CurrentStateInfo_25.Size = UDim2.new(
-		0.3078825771808624,
-		0,
-		0.05999999865889549,
-		0
-	)
-	CurrentStateInfo_25.Position = UDim2.new(
-		0.49941858649253845,
-		0,
-		0.9084559679031372,
-		0
-	)
+	CurrentStateInfo_25.Size = UDim2.new(0.307, 0, 0.059, 0)
+	CurrentStateInfo_25.Position = UDim2.new(0.499, 0, 0.908, 0)
 	CurrentStateInfo_25.AnchorPoint = Vector2.new(0.5, 0)
 	CurrentStateInfo_25.BackgroundTransparency = 1
 	CurrentStateInfo_25.ZIndex = 10
 	CurrentStateInfo_25.Text = "Teleporting to the next..."
-	CurrentStateInfo_25.TextColor3 = Color3.new(
-		0.658823549747467,
-		0.6509804129600525,
-		0.686274528503418
-	)
+	CurrentStateInfo_25.TextColor3 = Color3.new(0.658, 0.65, 0.686)
 	CurrentStateInfo_25.TextSize = 24
 	CurrentStateInfo_25.TextScaled = true
 	CurrentStateInfo_25.Font = Enum.Font.Highway
@@ -698,32 +494,18 @@ local function createGui(player)
 	local UIShadow_26 = Instance.new("UIShadow")
 	UIShadow_26.BlurRadius = UDim.new(0, 20)
 	UIShadow_26.Color = Color3.new(0, 0, 0)
-	UIShadow_26.Transparency = 0.9800000190734863
+	UIShadow_26.Transparency = 0.98
 	UIShadow_26.Parent = CurrentStateInfo_25
 
 	local RemaningBadges_27 = Instance.new("TextLabel")
 	RemaningBadges_27.Name = "RemaningBadges"
-	RemaningBadges_27.Size = UDim2.new(
-		0.07820241153240204,
-		0,
-		0.02363095059990883,
-		0
-	)
-	RemaningBadges_27.Position = UDim2.new(
-		0.4945153295993805,
-		0,
-		0.8045833110809326,
-		0
-	)
+	RemaningBadges_27.Size = UDim2.new(0.078, 0, 0.023, 0)
+	RemaningBadges_27.Position = UDim2.new(0.494, 0, 0.804, 0)
 	RemaningBadges_27.AnchorPoint = Vector2.new(0.5, 1)
 	RemaningBadges_27.BackgroundTransparency = 1
 	RemaningBadges_27.ZIndex = 10
 	RemaningBadges_27.Text = "0 Remaining"
-	RemaningBadges_27.TextColor3 = Color3.new(
-		0.658823549747467,
-		0.6509804127720525,
-		0.686274528503418
-	)
+	RemaningBadges_27.TextColor3 = Color3.new(0.658, 0.65, 0.686)
 	RemaningBadges_27.TextSize = 14
 	RemaningBadges_27.TextScaled = true
 	RemaningBadges_27.Font = Enum.Font.Highway
@@ -731,37 +513,19 @@ local function createGui(player)
 
 	local UIShadow_28 = Instance.new("UIShadow")
 	UIShadow_28.BlurRadius = UDim.new(0, 20)
-	UIShadow_28.Color = Color3.new(
-		0.05490196496248245,
-		0.007843137718737125,
-		0.14901961386203766
-	)
+	UIShadow_28.Color = Color3.new(0.054, 0.007, 0.149)
 	UIShadow_28.Transparency = 0.5
 	UIShadow_28.Parent = RemaningBadges_27
 
 	local AwardedOfTotal_29 = Instance.new("TextLabel")
 	AwardedOfTotal_29.Name = "AwardedOfTotal"
-	AwardedOfTotal_29.Size = UDim2.new(
-		0.0661771148443222,
-		0,
-		0.05204599350690842,
-		0
-	)
-	AwardedOfTotal_29.Position = UDim2.new(
-		0.49785783886909485,
-		0,
-		0.6155406832695007,
-		0
-	)
+	AwardedOfTotal_29.Size = UDim2.new(0.066, 0, 0.052, 0)
+	AwardedOfTotal_29.Position = UDim2.new(0.497, 0, 0.615, 0)
 	AwardedOfTotal_29.AnchorPoint = Vector2.new(0.5, 0)
 	AwardedOfTotal_29.BackgroundTransparency = 1
 	AwardedOfTotal_29.ZIndex = 10
 	AwardedOfTotal_29.Text = "0 / 0"
-	AwardedOfTotal_29.TextColor3 = Color3.new(
-		0.658823549747467,
-		0.6509804124374367,
-		0.686274528503418
-	)
+	AwardedOfTotal_29.TextColor3 = Color3.new(0.658, 0.65, 0.686)
 	AwardedOfTotal_29.TextSize = 17
 	AwardedOfTotal_29.TextScaled = true
 	AwardedOfTotal_29.Font = Enum.Font.Highway
@@ -769,130 +533,68 @@ local function createGui(player)
 
 	local UIShadow_30 = Instance.new("UIShadow")
 	UIShadow_30.BlurRadius = UDim.new(0, 20)
-	UIShadow_30.Color = Color3.new(
-		0.05490196496248245,
-		0.007843137718737125,
-		0.14901961386203766
-	)
+	UIShadow_30.Color = Color3.new(0.054, 0.007, 0.149)
 	UIShadow_30.Transparency = 0.5
 	UIShadow_30.Parent = AwardedOfTotal_29
 
 	local StatusText_31 = Instance.new("TextLabel")
 	StatusText_31.Name = "StatusText"
-	StatusText_31.Size = UDim2.new(
-		0.27201467752456665,
-		0,
-		0.03801576420664787,
-		0
-	)
-	StatusText_31.Position = UDim2.new(
-		0.49999991059303284,
-		0,
-		0.8523480296134949,
-		0
-	)
+	StatusText_31.Size = UDim2.new(0.272, 0, 0.038, 0)
+	StatusText_31.Position = UDim2.new(0.499, 0, 0.852, 0)
 	StatusText_31.AnchorPoint = Vector2.new(0.5, 0)
 	StatusText_31.BackgroundTransparency = 1
 	StatusText_31.ZIndex = 13
 	StatusText_31.Text = "Awarded all badges in this game..."
-	StatusText_31.TextColor3 = Color3.new(
-		0.7333333492279053,
-		0.5411764979362488,
-		1
-	)
+	StatusText_31.TextColor3 = Color3.new(0.733, 0.541, 1)
 	StatusText_31.TextSize = 20
 	StatusText_31.TextScaled = true
-	StatusText_31.FontFace = Font.fromName(
-		"HighwayGothic",
-		Enum.FontWeight.Regular,
-		Enum.FontStyle.Italic
-	)
+	StatusText_31.FontFace = Font.fromName("HighwayGothic", Enum.FontWeight.Regular, Enum.FontStyle.Italic)
 	StatusText_31.Parent = Mainframe_2
 
 	local UIShadow_32 = Instance.new("UIShadow")
 	UIShadow_32.BlurRadius = UDim.new(0, 20)
-	UIShadow_32.Color = Color3.new(
-		0.054901960784313725,
-		0,
-		0.08235294117647059
-	)
+	UIShadow_32.Color = Color3.new(0.054, 0, 0.082)
 	UIShadow_32.Transparency = 0.5
 	UIShadow_32.Parent = StatusText_31
 
 	local GamePositionTracker_33 = Instance.new("TextLabel")
 	GamePositionTracker_33.Name = "GamePositionTracker"
-	GamePositionTracker_33.Size = UDim2.new(
-		0.2069987803697586,
-		0,
-		0.04577380046248436,
-		0
-	)
-	GamePositionTracker_33.Position = UDim2.new(
-		0.49569419026374817,
-		0,
-		0.16660718619823456,
-		0
-	)
+	GamePositionTracker_33.Size = UDim2.new(0.206, 0, 0.045, 0)
+	GamePositionTracker_33.Position = UDim2.new(0.495, 0, 0.166, 0)
 	GamePositionTracker_33.AnchorPoint = Vector2.new(0.5, 0)
 	GamePositionTracker_33.BackgroundTransparency = 1
 	GamePositionTracker_33.ZIndex = 10
 	GamePositionTracker_33.Text = "Game 0 of 0"
-	GamePositionTracker_33.TextColor3 = Color3.new(
-		0.658823549747467,
-		0.6509804128390525,
-		0.686274528503418
-	)
+	GamePositionTracker_33.TextColor3 = Color3.new(0.658, 0.65, 0.686)
 	GamePositionTracker_33.TextSize = 36
 	GamePositionTracker_33.TextScaled = true
-	GamePositionTracker_33.FontFace = Font.fromName(
-		"LegacyArial",
-		Enum.FontWeight.Bold,
-		Enum.FontStyle.Normal
-	)
+	GamePositionTracker_33.FontFace = Font.fromName("LegacyArial", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 	GamePositionTracker_33.Parent = Mainframe_2
 
 	local UIShadow_34 = Instance.new("UIShadow")
 	UIShadow_34.BlurRadius = UDim.new(0, 20)
 	UIShadow_34.Color = Color3.new(0, 0, 0)
-	UIShadow_34.Transparency = 0.9800000190734863
+	UIShadow_34.Transparency = 0.98
 	UIShadow_34.Parent = GamePositionTracker_33
 
 	local MainTitle_35 = Instance.new("TextLabel")
 	MainTitle_35.Name = "MainTitle"
-	MainTitle_35.Size = UDim2.new(
-		0.26070448756217957,
-		0,
-		0.0758928582072258,
-		0
-	)
-	MainTitle_35.Position = UDim2.new(
-		0.5,
-		0,
-		0.08948809653520584,
-		0
-	)
+	MainTitle_35.Size = UDim2.new(0.26, 0, 0.075, 0)
+	MainTitle_35.Position = UDim2.new(0.5, 0, 0.089, 0)
 	MainTitle_35.AnchorPoint = Vector2.new(0.5, 0)
 	MainTitle_35.BackgroundTransparency = 1
 	MainTitle_35.ZIndex = 10
 	MainTitle_35.Text = "F3B's Badge Chain"
-	MainTitle_35.TextColor3 = Color3.new(
-		0.658823549747467,
-		0.6509804124374367,
-		0.686274528503418
-	)
+	MainTitle_35.TextColor3 = Color3.new(0.658, 0.65, 0.686)
 	MainTitle_35.TextSize = 36
 	MainTitle_35.TextScaled = true
-	MainTitle_35.FontFace = Font.fromName(
-		"LegacyArial",
-		Enum.FontWeight.Bold,
-		Enum.FontStyle.Normal
-	)
+	MainTitle_35.FontFace = Font.fromName("LegacyArial", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 	MainTitle_35.Parent = Mainframe_2
 
 	local UIShadow_36 = Instance.new("UIShadow")
 	UIShadow_36.BlurRadius = UDim.new(0, 20)
 	UIShadow_36.Color = Color3.new(0, 0, 0)
-	UIShadow_36.Transparency = 0.9800000190734863
+	UIShadow_36.Transparency = 0.98
 	UIShadow_36.Parent = MainTitle_35
 
 	return {
@@ -932,25 +634,12 @@ updateProgress = function(gui, owned, total)
 		gui.barFill,
 		TWEEN_BAR,
 		{
-			Size = UDim2.new(
-				MAX_BAR_WIDTH * alpha,
-				0,
-				BAR_HEIGHT,
-				0
-			)
+			Size = UDim2.new(MAX_BAR_WIDTH * alpha, 0, BAR_HEIGHT, 0)
 		}
 	):Play()
 
-	gui.awardedOfTotal.Text = string.format(
-		"%d / %d",
-		owned,
-		total
-	)
-
-	gui.remainingBadges.Text = string.format(
-		"%d Remaining",
-		math.max(total - owned, 0)
-	)
+	gui.awardedOfTotal.Text = string.format("%d / %d", owned, total)
+	gui.remainingBadges.Text = string.format("%d Remaining", math.max(total - owned, 0))
 end
 
 --============================================================
@@ -959,10 +648,7 @@ end
 
 local function checkBadgeOwnership(player, badgeId)
 	local success, hasBadgeOrError = pcall(function()
-		return BadgeService:UserHasBadgeAsync(
-			player.UserId,
-			badgeId
-		)
+		return BadgeService:UserHasBadgeAsync(player.UserId, badgeId)
 	end)
 
 	if not success then
@@ -984,28 +670,13 @@ local function awardOneBadge(player, badgeId)
 			return false, "Player left the server."
 		end
 
-		--====================================================
-		-- THE IMPORTANT PART
-		--
-		-- pcall's first result only tells us whether the
-		-- function threw an error.
-		--
-		-- AwardBadgeAsync's return value is the SECOND result.
-		--
-		-- callOk == true
-		-- awardResult == true
-		--
-		-- means the badge was actually awarded.
-		--====================================================
-
 		local callOk, awardResult = pcall(function()
-			return BadgeService:AwardBadgeAsync(
-				player.UserId,
-				badgeId
-			)
+			return BadgeService:AwardBadgeAsync(player.UserId, badgeId)
 		end)
 
-		if callOk and awardResult == true then
+		-- Roblox's API can sometimes return nil (void) on success instead of a literal 'true'.
+		-- If callOk is true and awardResult is not explicitly false, assume it was successfully awarded.
+		if callOk and awardResult ~= false then
 			return true, nil
 		end
 
@@ -1021,48 +692,18 @@ local function awardOneBadge(player, badgeId)
 				tostring(awardResult)
 			)
 
-			-- A real rate-limit error means there is no point
-			-- hammering the same server again.
 			if isRateLimitError(awardResult) then
 				return false, "RATE_LIMIT"
 			end
 		else
-			-- Roblox successfully executed the API call,
-			-- but AwardBadgeAsync returned false.
-			--
-			-- That is NOT a successful award.
 			lastError = "AwardBadgeAsync returned false"
-
-			warn(
-				"[BadgeChain] Badge",
-				badgeId,
-				"was NOT awarded. AwardBadgeAsync returned false."
-			)
+			warn("[BadgeChain] Badge", badgeId, "was NOT awarded. AwardBadgeAsync returned false.")
 		end
 
-		--====================================================
-		-- It is possible the badge was awarded but the call
-		-- result did not come back as expected.
-		--
-		-- Verify before deciding that the award failed.
-		--====================================================
-
-		local ownership, ownershipError = checkBadgeOwnership(
-			player,
-			badgeId
-		)
+		local ownership, ownershipError = checkBadgeOwnership(player, badgeId)
 
 		if ownership == true then
 			return true, nil
-		end
-
-		if ownershipError then
-			warn(
-				"[BadgeChain] Ownership check failed for badge",
-				badgeId,
-				":",
-				tostring(ownershipError)
-			)
 		end
 
 		if attempt < MAX_FAILED_ATTEMPTS then
@@ -1088,11 +729,7 @@ local function processPlayer(player)
 		return
 	end
 
-	setPhase(
-		gui,
-		"Waiting...",
-		"Loading data..."
-	)
+	setPhase(gui, "Waiting...", "Loading data...")
 
 	local currentUniverse = game.GameId
 	local currentPlace = game.PlaceId
@@ -1105,12 +742,7 @@ local function processPlayer(player)
 		end
 	end
 
-	local nextPlaceId = (
-		currentIndex
-		and currentIndex < #gameList
-	)
-		and gameList[currentIndex + 1].placeId
-		or nil
+	local nextPlaceId = (currentIndex and currentIndex < #gameList) and gameList[currentIndex + 1].placeId or nil
 
 	gui.gameTracker.Text = string.format(
 		"Game %d of %d",
@@ -1124,7 +756,6 @@ local function processPlayer(player)
 
 	local joinData = player:GetJoinData()
 	local teleportData = joinData and joinData.TeleportData or {}
-
 	local alreadyAwarded = {}
 
 	if teleportData and teleportData.awardedIds then
@@ -1137,21 +768,12 @@ local function processPlayer(player)
 	-- LOAD BADGES
 	--========================================================
 
-	setPhase(
-		gui,
-		"Loading badges...",
-		"Loading data..."
-	)
+	setPhase(gui, "Loading badges...", "Loading data...")
 
 	local badges = fetchBadgesForUniverse(currentUniverse)
 
 	if not badges then
-		setPhase(
-			gui,
-			"Error",
-			"Failed to load badges. Rejoin."
-		)
-
+		setPhase(gui, "Error", "Failed to load badges. Rejoin.")
 		return
 	end
 
@@ -1163,50 +785,31 @@ local function processPlayer(player)
 	local ownedCount = 0
 	local total = #badges
 
-	setPhase(
-		gui,
-		"Checking badges...",
-		"Syncing inventory..."
-	)
+	setPhase(gui, "Checking badges...", "Syncing inventory...")
 
 	for _, badge in ipairs(badges) do
 		if alreadyAwarded[tostring(badge.id)] then
-			-- This ID was confirmed as awarded by a previous
-			-- server during this chain.
 			ownedCount += 1
 		else
-			local hasBadge, checkError = checkBadgeOwnership(
-				player,
-				badge.id
-			)
+			local hasBadge, checkError = checkBadgeOwnership(player, badge.id)
 
 			if hasBadge == true then
 				ownedCount += 1
 			elseif hasBadge == false then
 				table.insert(toAward, badge)
 			else
-				-- The ownership check itself failed.
-				--
-				-- Do not blindly treat this as "not owned"
-				-- and start awarding. That can cause bad state.
 				warn(
 					"[BadgeChain] Could not verify ownership of badge",
 					badge.id,
 					":",
 					tostring(checkError)
 				)
-
 				table.insert(toAward, badge)
 			end
 		end
 	end
 
-	updateProgress(
-		gui,
-		ownedCount,
-		total
-	)
-
+	updateProgress(gui, ownedCount, total)
 	task.wait(1)
 
 	--========================================================
@@ -1220,85 +823,36 @@ local function processPlayer(player)
 			return
 		end
 
-		--====================================================
-		-- NEVER ATTEMPT AWARD #86 IN THIS SERVER
-		--====================================================
-
 		if awardsThisServer >= AWARDS_PER_SERVER then
 			local teleported = teleportToNewServer(
 				player,
 				currentPlace,
 				alreadyAwarded,
 				gui,
-				string.format(
-					"%d badges awarded. Starting a new server...",
-					AWARDS_PER_SERVER
-				)
+				string.format("%d badges awarded. Starting a new server...", AWARDS_PER_SERVER)
 			)
 
 			if teleported then
 				return
 			end
 
-			-- If the teleport itself failed, do NOT pretend
-			-- that the server changed. Wait and try the
-			-- teleport again instead of awarding badge #86.
 			task.wait(2)
-
-			local retryTeleport = teleportToNewServer(
-				player,
-				currentPlace,
-				alreadyAwarded,
-				gui,
-				"Retrying..."
-			)
-
-			if retryTeleport then
-				return
-			end
-
-			-- Keep trying the teleport rather than breaking
-			-- the rate-limit protection.
+			local retryTeleport = teleportToNewServer(player, currentPlace, alreadyAwarded, gui, "Retrying...")
+			if retryTeleport then return end
+			
 			task.wait(3)
-
 			continue
 		end
 
-		local awarded, awardError = awardOneBadge(
-			player,
-			badge.id
-		)
+		local awarded, awardError = awardOneBadge(player, badge.id)
 
 		if awarded then
-			--================================================
-			-- ONLY NOW DO WE COUNT THE BADGE.
-			--================================================
-
 			ownedCount += 1
 			awardsThisServer += 1
 			alreadyAwarded[tostring(badge.id)] = true
 
-			setPhase(
-				gui,
-				"Awarding badges...",
-				string.format(
-					"Awarded Badge: %s",
-					tostring(badge.id)
-				)
-			)
-
-			updateProgress(
-				gui,
-				ownedCount,
-				total
-			)
-
-			--================================================
-			-- EXACTLY 85 SUCCESSFUL AWARDS
-			--
-			-- Immediately leave for a new server.
-			-- No 86th attempt.
-			--================================================
+			setPhase(gui, "Awarding badges...", string.format("Awarded Badge: %s", tostring(badge.id)))
+			updateProgress(gui, ownedCount, total)
 
 			if awardsThisServer >= AWARDS_PER_SERVER then
 				task.wait(0.2)
@@ -1315,38 +869,14 @@ local function processPlayer(player)
 					return
 				end
 
-				-- Teleport failed. Never continue awarding.
 				while player.Parent do
 					task.wait(2)
-
-					local retry = teleportToNewServer(
-						player,
-						currentPlace,
-						alreadyAwarded,
-						gui,
-						"Retrying teleport..."
-					)
-
-					if retry then
-						return
-					end
+					local retry = teleportToNewServer(player, currentPlace, alreadyAwarded, gui, "Retrying teleport...")
+					if retry then return end
 				end
-
 				return
 			end
 		else
-			--================================================
-			-- BADGE DID NOT GET AWARDED.
-			--
-			-- IMPORTANT:
-			-- ownedCount is NOT incremented.
-			-- awardsThisServer is NOT incremented.
-			-- The script does NOT move on as though it worked.
-			--
-			-- A failed badge remains unfinished. A server change
-			-- MUST NEVER happen because an award failed.
-			--================================================
-
 			warn(
 				string.format(
 					"[BadgeChain] Badge %s failed to award (%s). Skipping for now.",
@@ -1355,9 +885,13 @@ local function processPlayer(player)
 				)
 			)
 			
-			-- Simply continue to the next badge. The failed badge
-			-- is not added to alreadyAwarded, so it will be retried
-			-- in the next server session.
+			-- If the script hits a hard rate limit, it must pause. 
+			-- Instantly skipping to the next badge would just cause every subsequent badge to fail as well.
+			if awardError == "RATE_LIMIT" then
+				setPhase(gui, "Rate Limited", "Pausing 60s for API reset...")
+				warn("[BadgeChain] Rate limit hit. Pausing for 60 seconds before continuing to prevent mass failures.")
+				task.wait(60)
+			end
 		end
 
 		task.wait(AWARD_DELAY)
@@ -1367,42 +901,27 @@ local function processPlayer(player)
 	-- ALL BADGES IN CURRENT GAME COMPLETE
 	--========================================================
 
-	updateProgress(
-		gui,
-		total,
-		total
-	)
+	updateProgress(gui, total, total)
+
+	local completeSound = Instance.new("Sound")
+	completeSound.SoundId = "rbxassetid://107978604605265"
+	completeSound.Volume = 0.69
+	completeSound.PlaybackSpeed = 0.5
+	completeSound.Parent = gui.screen
+	completeSound:Play()
 
 	if nextPlaceId then
-		setPhase(
-			gui,
-			"Awarded all badges in this game!",
-			"Teleporting to the next..."
-		)
-
+		setPhase(gui, "Awarded all badges in this game!", "Teleporting to the next...")
 		task.wait(2)
 
 		while player.Parent do
-			local teleported = teleportToNextGame(
-				player,
-				nextPlaceId
-			)
-
-			if teleported then
-				return
-			end
-
+			local teleported = teleportToNextGame(player, nextPlaceId)
+			if teleported then return end
 			task.wait(2.5)
 		end
 	else
-		setPhase(
-			gui,
-			"Come back tomorrow for more badges!",
-			"Chain complete!"
-		)
-
-		gui.remainingBadges.Text =
-			"All badges awarded in every game!"
+		setPhase(gui, "Come back tomorrow for more badges!", "Chain complete!")
+		gui.remainingBadges.Text = "All badges awarded in every game!"
 	end
 end
 
@@ -1411,15 +930,9 @@ end
 --============================================================
 
 Players.PlayerAdded:Connect(function(player)
-	task.spawn(
-		processPlayer,
-		player
-	)
+	task.spawn(processPlayer, player)
 end)
 
 for _, player in ipairs(Players:GetPlayers()) do
-	task.spawn(
-		processPlayer,
-		player
-	)
+	task.spawn(processPlayer, player)
 end
