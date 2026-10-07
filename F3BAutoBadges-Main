@@ -5,6 +5,12 @@ local TeleportService = game:GetService("TeleportService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local SoundService = game:GetService("SoundService")
+local DataStoreService = game:GetService("DataStoreService")
+
+--============================================================
+-- PERMANENT CACHE STORE
+--============================================================
+local BadgeCache = DataStoreService:GetDataStore("BadgeChainCache")
 
 --============================================================
 -- MUTE LOADER SOUND
@@ -14,7 +20,7 @@ if fetchSound then
 	fetchSound:Destroy()
 end
 
-local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/universe-place-ids.txt"
+local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/ID-List-F3B-Chain-2"
 local AWARD_DELAY = 0.069
 local RATE_LIMIT_KEYWORDS = { "rate limit", "too many requests", "429", "throttle", "flood" }
 local MAX_BAR_WIDTH = 0.5630570650100708
@@ -454,25 +460,50 @@ local function processPlayer(player)
 	local gui = createGui(player)
 	if not gui then return end
 	setPhase(gui, "Waiting...", "Loading game data...")
+	
 	local currentUniverse = game.GameId
 	local currentPlace = game.PlaceId
 	local currentIndex = nil
+	
 	for i, entry in ipairs(gameList) do
 		if entry.universeId == currentUniverse then
 			currentIndex = i
 			break
 		end
 	end
+	
 	local nextPlaceId = (currentIndex and currentIndex < #gameList) and gameList[currentIndex + 1].placeId or nil
 	gui.gameTracker.Text = string.format("Game %d of %d", currentIndex or 1, #gameList > 0 and #gameList or 1)
+	
+	local dsKey = "User_" .. player.UserId .. "_Universe_" .. currentUniverse
+	local alreadyAwarded = {}
+	
+	-- Recover from TeleportData (short-term cache)
 	local joinData = player:GetJoinData()
 	local teleportData = joinData and joinData.TeleportData or {}
-	local alreadyAwarded = {}
 	if teleportData.awardedIds then
 		for _, id in ipairs(teleportData.awardedIds) do
 			alreadyAwarded[tostring(id)] = true
 		end
 	end
+
+	-- LOAD PERMANENT DATASTORE CACHE (long-term cache)
+	local dsSuccess, dsData = pcall(function() return BadgeCache:GetAsync(dsKey) end)
+	if dsSuccess and type(dsData) == "table" then
+		for _, id in ipairs(dsData) do
+			alreadyAwarded[tostring(id)] = true
+		end
+	end
+
+	-- Function to save current progress to permanent cache before teleports
+	local function saveCache()
+		local toSave = {}
+		for id in pairs(alreadyAwarded) do
+			table.insert(toSave, tonumber(id))
+		end
+		pcall(function() BadgeCache:SetAsync(dsKey, toSave) end)
+	end
+
 	setPhase(gui, "Loading badges...", "Loading chain data...")
 	local badges = fetchBadgesForUniverse(currentUniverse)
 	
@@ -480,12 +511,15 @@ local function processPlayer(player)
 		setPhase(gui, "Error", "Failed to load badges. Rejoin.")
 		return
 	end
+	
 	local toAward = {}
 	local ownedCount = 0
 	local total = #badges
+	
 	setPhase(gui, "Checking badges...", "Syncing inventory...")
 	
 	for _, badge in ipairs(badges) do
+		-- If it's in the permanent cache or teleport data, skip checking entirely!
 		if alreadyAwarded[tostring(badge.id)] then
 			ownedCount += 1
 		else
@@ -499,32 +533,33 @@ local function processPlayer(player)
 			if not has then table.insert(toAward, badge) end
 		end
 	end
+	
 	updateProgress(gui, ownedCount, total)
 	task.wait(1.5)
 	
 	local AWARDS_PER_SERVER = 85
 	local awardsThisServer = 0
 
-	-- Award Loop
+	-- Award Loop (Only iterates through badges the player does NOT own)
 	for _, badge in ipairs(toAward) do
 		if not player.Parent then return end
 		local success, result = pcall(function() return BadgeService:AwardBadgeAsync(player.UserId, badge.id) end)
 		
 		if success and result == true then
-			-- Badge genuinely awarded
 			ownedCount += 1
 			awardsThisServer += 1
 			alreadyAwarded[tostring(badge.id)] = true
 			setPhase(gui, "Awarding badges...", "Awarded Badge: " .. tostring(badge.id))
 			updateProgress(gui, ownedCount, total)
 			
-			-- Server specific rate-limit jump
 			if awardsThisServer >= AWARDS_PER_SERVER then
 				setPhase(gui, "Switching servers...", "85 badges awarded. Moving to new server...")
 				task.wait(1.5)
+				
+				saveCache() -- Save to DataStore before leaving
+				
 				local teleportOptions = Instance.new("TeleportOptions")
 				teleportOptions.ShouldReserveServer = true
-				
 				local saveData = { awardedIds = {}, fromChain = true }
 				for id in pairs(alreadyAwarded) do table.insert(saveData.awardedIds, tonumber(id)) end
 				teleportOptions:SetTeleportData(saveData)
@@ -539,19 +574,22 @@ local function processPlayer(player)
 			task.wait(AWARD_DELAY)
 			
 		elseif success and result == false then
-			-- Instantly bypass badges missed during the initial read-check limit.
-			-- No delay, does not count toward the 85 quota.
+			-- Badge was already owned natively but missed the check. Skip instantly.
 			ownedCount += 1
 			alreadyAwarded[tostring(badge.id)] = true
 			updateProgress(gui, ownedCount, total)
 		else
-			-- Error (e.g. Rate Limit on the award end)
-			-- Failed badges remain unfinished and do not trigger a teleport
-			warn("[BadgeChain] Error awarding badge " .. tostring(badge.id) .. ": " .. tostring(result))
+			-- Handle errors without triggering fake server jumps
+			if isRateLimitError(result) then
+				warn("[BadgeChain] Rate limited by Roblox API. Pausing...")
+			else
+				warn("[BadgeChain] Error awarding badge " .. tostring(badge.id) .. ": " .. tostring(result))
+			end
 		end
 	end
 	
 	updateProgress(gui, total, total)
+	saveCache() -- Save to DataStore once all badges in this game are cleared
 	
 	-- Play completion sound
 	local completeSound = Instance.new("Sound")
