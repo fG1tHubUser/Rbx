@@ -605,7 +605,7 @@ updateProgress = function(gui, owned, total)
 end
 
 --============================================================
--- AWARD ONE BADGE (INSTANT FALSE DETECTION)
+-- AWARD ONE BADGE 
 --============================================================
 
 local function awardOneBadge(player, badgeId)
@@ -613,7 +613,7 @@ local function awardOneBadge(player, badgeId)
 
 	for attempt = 1, MAX_FAILED_ATTEMPTS do
 		if not player or not player.Parent then
-			return false, "Player left the server."
+			return false, "LEFT"
 		end
 
 		local callOk, awardResult = pcall(function()
@@ -621,12 +621,12 @@ local function awardOneBadge(player, badgeId)
 		end)
 
 		if callOk then
-			if awardResult ~= false then
-				return true, "AWARDED" -- Genuine new award
+			if awardResult == true then
+				return true, "AWARDED"
 			else
 				-- AwardBadgeAsync returns false immediately if the player already owns it,
-				-- or if the badge is disabled. We can instantly skip retrying.
-				return true, "ALREADY_OWNED"
+				-- or if the badge is disabled.
+				return false, "ALREADY_OWNED"
 			end
 		else
 			lastError = awardResult
@@ -637,13 +637,10 @@ local function awardOneBadge(player, badgeId)
 			end
 		end
 
-		-- Only wait and retry if the API actually errored out
-		if attempt < MAX_FAILED_ATTEMPTS then
-			task.wait(0.5 * attempt)
-		end
+		task.wait(0.5 * attempt)
 	end
 
-	return false, lastError or "Unknown badge award failure"
+	return false, "ERROR"
 end
 
 --============================================================
@@ -697,7 +694,7 @@ local function processPlayer(player)
 
 	setPhase(gui, "Checking badges...", "Syncing inventory...")
 
-	-- Initial ownership sweep (with a tiny delay to prevent rate limits on rejoin)
+	-- Initial ownership sweep (Yields slightly to prevent overwhelming the server's check limit)
 	for i, badge in ipairs(badges) do
 		if alreadyAwarded[tostring(badge.id)] then
 			ownedCount += 1
@@ -714,9 +711,8 @@ local function processPlayer(player)
 			end
 		end
 
-		-- Small throttle to prevent blowing the game server's internal limit on big games
-		if i % 10 == 0 then
-			task.wait(0.05)
+		if i % 20 == 0 then
+			task.wait()
 		end
 	end
 
@@ -742,18 +738,12 @@ local function processPlayer(player)
 
 		local awarded, status = awardOneBadge(player, badge.id)
 
-		if awarded then
+		if status == "AWARDED" then
 			ownedCount += 1
+			awardsThisServer += 1
 			alreadyAwarded[tostring(badge.id)] = true
 
-			if status == "AWARDED" then
-				awardsThisServer += 1
-				setPhase(gui, "Awarding badges...", string.format("Awarded Badge: %s", tostring(badge.id)))
-			else
-				-- Instantly skips and updates the GUI without taking away from your 85 limit
-				setPhase(gui, "Syncing...", "Skipping owned badge...")
-			end
-
+			setPhase(gui, "Awarding badges...", string.format("Awarded Badge: %s", tostring(badge.id)))
 			updateProgress(gui, ownedCount, total)
 
 			if awardsThisServer >= AWARDS_PER_SERVER then
@@ -768,16 +758,23 @@ local function processPlayer(player)
 				end
 				return
 			end
-		else
-			warn(string.format("[BadgeChain] Badge %s failed to award (%s). Skipping for now.", tostring(badge.id), tostring(status)))
 			
-			if status == "RATE_LIMIT" then
-				setPhase(gui, "Rate Limited", "Pausing 60s for API reset...")
-				task.wait(60)
-			end
+			-- Only wait the delay if an award successfully went through
+			task.wait(AWARD_DELAY)
+			
+		elseif status == "ALREADY_OWNED" then
+			ownedCount += 1
+			alreadyAwarded[tostring(badge.id)] = true
+			setPhase(gui, "Syncing...", "Skipping owned badge...")
+			updateProgress(gui, ownedCount, total)
+			
+			-- Skip instantly in one frame without pausing for 0.069s
+			task.wait()
+			
+		elseif status == "RATE_LIMIT" then
+			setPhase(gui, "Rate Limited", "Pausing 60s for API reset...")
+			task.wait(60)
 		end
-
-		task.wait(AWARD_DELAY)
 	end
 
 	updateProgress(gui, total, total)
