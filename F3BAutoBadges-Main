@@ -21,7 +21,7 @@ if fetchSound then
 end
 
 local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/universe-place-ids.txt"
-local AWARD_DELAY = 0
+local AWARD_DELAY = 0.001
 local RATE_LIMIT_KEYWORDS = { "rate limit", "too many requests", "429", "throttle", "flood" }
 local MAX_BAR_WIDTH = 0.5630570650100708
 local BAR_HEIGHT = 0.03726167604327202
@@ -553,7 +553,7 @@ local function processPlayer(player)
 			updateProgress(gui, ownedCount, total)
 			
 			if awardsThisServer >= AWARDS_PER_SERVER then
-				setPhase(gui, "Switching servers...", "Moving to new server...")
+				setPhase(gui, "Switching servers...", "Moving to a new server...")
 				task.wait(1.5)
 				
 				saveCache() -- Save to DataStore before leaving
@@ -595,7 +595,7 @@ local function processPlayer(player)
 	local completeSound = Instance.new("Sound")
 	completeSound.SoundId = "rbxassetid://107978604605265"
 	completeSound.Volume = 0.69
-	completeSound.PlaybackSpeed = 0.467
+	completeSound.PlaybackSpeed = 0.67
 	completeSound.Parent = gui.screen
 	completeSound:Play()
 
