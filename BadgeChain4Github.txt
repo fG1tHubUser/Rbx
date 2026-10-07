@@ -1207,7 +1207,7 @@ local function processPlayer(player)
 		total
 	)
 
-	task.wait(1.5)
+	task.wait(1)
 
 	--========================================================
 	-- AWARD LOOP
@@ -1283,9 +1283,7 @@ local function processPlayer(player)
 				"Awarding badges...",
 				string.format(
 					"Awarded Badge: %s",
-					tostring(badge.id),
-					awardsThisServer,
-					AWARDS_PER_SERVER
+					tostring(badge.id)
 				)
 			)
 
