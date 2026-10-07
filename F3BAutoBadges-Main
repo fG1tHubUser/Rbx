@@ -333,7 +333,7 @@ local function createGui(player)
 	RemaningBadges_27.Text = "0 Remaining"
 	RemaningBadges_27.TextColor3 = Color3.new(0.658823549747467, 0.6509804129600525, 0.686274528503418)
 	RemaningBadges_27.TextSize = 14
-	RemaningBadges_27.TextScaled = true
+	RemaningBadges_27.TextScaled = false
 	RemaningBadges_27.Font = Enum.Font.Highway
 	RemaningBadges_27.Parent = Mainframe_2
 	local UIShadow_28 = Instance.new("UIShadow")
