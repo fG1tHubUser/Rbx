@@ -20,7 +20,7 @@ if fetchSound then
 	fetchSound:Destroy()
 end
 
-local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/ID-List-F3B-Chain-2"
+local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/F3B-Chain-IDs"
 local AWARD_DELAY = 0.01
 local RATE_LIMIT_KEYWORDS = { "rate limit", "too many requests", "429", "throttle", "flood" }
 local MAX_BAR_WIDTH = 0.5630570650100708
