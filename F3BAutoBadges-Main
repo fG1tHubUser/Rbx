@@ -605,7 +605,7 @@ updateProgress = function(gui, owned, total)
 end
 
 --============================================================
--- AWARD ONE BADGE (CLEANED)
+-- AWARD ONE BADGE
 --============================================================
 
 local function awardOneBadge(player, badgeId)
@@ -622,9 +622,10 @@ local function awardOneBadge(player, badgeId)
 
 		if callOk then
 			if awardResult == true then
-				return true, nil -- Successfully awarded
+				return true, nil
 			else
-				return false, nil -- Badge is already owned or disabled. Returns false natively.
+				-- A 'false' here means Roblox determined you own it or it's disabled.
+				return false, nil 
 			end
 		else
 			lastError = awardResult
@@ -692,37 +693,51 @@ local function processPlayer(player)
 
 	setPhase(gui, "Checking badges...", "Syncing inventory...")
 
-	-- SILENT OWNERSHIP SWEEP
-	-- Checks every badge behind the scenes. Does NOT update the progress bar individually.
+	--========================================================
+	-- SILENT BACKGROUND SWEEP (WITH RETRY PROTECTION)
+	--========================================================
 	for i, badge in ipairs(badges) do
 		if alreadyAwarded[tostring(badge.id)] then
 			ownedCount += 1
 		else
-			local success, hasBadge = pcall(function()
-				return BadgeService:UserHasBadgeAsync(player.UserId, badge.id)
-			end)
+			local success = false
+			local hasBadge = false
+			
+			-- If Roblox's internal read API throttles, safely retry instead of giving up
+			-- and incorrectly dumping the badge into the award queue.
+			while not success do
+				success, hasBadge = pcall(function()
+					return BadgeService:UserHasBadgeAsync(player.UserId, badge.id)
+				end)
+				
+				if not success then
+					task.wait(1) 
+				end
+			end
 
-			if success and hasBadge then
+			if hasBadge then
 				ownedCount += 1
 				alreadyAwarded[tostring(badge.id)] = true
 			else
-				-- ONLY unowned badges get added to this list.
 				table.insert(toAward, badge)
 			end
 		end
 
-		-- Tiny yield to avoid hitting read limits
-		if i % 30 == 0 then task.wait() end
+		if i % 25 == 0 then task.wait(0.1) end
 	end
 
+	--========================================================
 	-- INSTANT PROGRESS BAR JUMP
-	-- Snaps the bar from 0 directly to whatever the total owned count is right now.
+	-- Snaps directly to whatever the total owned count is.
+	--========================================================
 	updateProgress(gui, ownedCount, total)
 	task.wait(0.5)
 
 	local awardsThisServer = 0
 
-	-- This loop ONLY contains badges the player does NOT own yet.
+	--========================================================
+	-- AWARD LOOP (ONLY CONTAINS UNOWNED BADGES)
+	--========================================================
 	for _, badge in ipairs(toAward) do
 		if not player.Parent then return end
 
@@ -741,7 +756,6 @@ local function processPlayer(player)
 		local status, err = awardOneBadge(player, badge.id)
 
 		if status == true then
-			-- SUCCESSFULLY AWARDED
 			ownedCount += 1
 			awardsThisServer += 1
 			alreadyAwarded[tostring(badge.id)] = true
@@ -765,14 +779,12 @@ local function processPlayer(player)
 			task.wait(AWARD_DELAY)
 			
 		elseif status == false then
-			-- ALREADY OWNED (Caught during award phase if the native check missed it)
-			-- Silently updates variables and instantly skips to the next badge. No delays, no UI text changes.
+			-- Badge was somehow already owned despite the sweep. Instantly skip.
 			ownedCount += 1
 			alreadyAwarded[tostring(badge.id)] = true
 			updateProgress(gui, ownedCount, total)
 			
 		elseif status == nil then
-			-- FAILURE
 			if err == "RATE_LIMIT" then
 				setPhase(gui, "Rate Limited", "Pausing 60s for API reset...")
 				task.wait(60)
@@ -780,7 +792,9 @@ local function processPlayer(player)
 		end
 	end
 
-	-- ALL BADGES AWARDED / ALREADY OWNED
+	--========================================================
+	-- ALL BADGES IN CURRENT GAME COMPLETE
+	--========================================================
 	updateProgress(gui, total, total)
 
 	local completeSound = Instance.new("Sound")
