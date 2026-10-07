@@ -594,8 +594,8 @@ local function processPlayer(player)
 	-- Play completion sound
 	local completeSound = Instance.new("Sound")
 	completeSound.SoundId = "rbxassetid://107978604605265"
-	completeSound.Volume = 0.69
-	completeSound.PlaybackSpeed = 0.67
+	completeSound.Volume = 0.5
+	completeSound.PlaybackSpeed = 0.49
 	completeSound.Parent = gui.screen
 	completeSound:Play()
 
