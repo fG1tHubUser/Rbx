@@ -21,7 +21,7 @@ if fetchSound then
 end
 
 local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/universe-place-ids.txt"
-local AWARD_DELAY = 0.025
+local AWARD_DELAY = 0.01
 local RATE_LIMIT_KEYWORDS = { "rate limit", "too many requests", "429", "throttle", "flood" }
 local MAX_BAR_WIDTH = 0.5630570650100708
 local BAR_HEIGHT = 0.03726167604327202
