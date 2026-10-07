@@ -111,7 +111,7 @@ end
 task.spawn(loadGameList)
 
 --============================================================
--- BADGE LOADING & BATCH INVENTORY CHECK
+-- BADGE LOADING
 --============================================================
 
 local function fetchBadgesForUniverse(universeId)
@@ -173,40 +173,6 @@ local function fetchBadgesForUniverse(universeId)
 	end
 
 	return all
-end
-
--- Completely bypasses BadgeService read limits by batch-checking via proxy
-local function fetchOwnedBadgesBatch(userId, badgeIds)
-	local owned = {}
-	if #badgeIds == 0 then return owned end
-
-	local chunks = {}
-	for i = 1, #badgeIds, 100 do
-		local chunk = {}
-		for j = i, math.min(i + 99, #badgeIds) do
-			table.insert(chunk, badgeIds[j])
-		end
-		table.insert(chunks, chunk)
-	end
-
-	for _, chunk in ipairs(chunks) do
-		local url = string.format("https://badges.roproxy.com/v1/users/%d/badges/awarded-dates?badgeIds=%s", userId, table.concat(chunk, ","))
-		
-		for attempt = 1, 3 do
-			local success, response = pcall(function() return HttpService:GetAsync(url, true) end)
-			if success then
-				local ok, data = pcall(function() return HttpService:JSONDecode(response) end)
-				if ok and type(data) == "table" and data.data then
-					for _, info in ipairs(data.data) do
-						owned[tostring(info.badgeId)] = true
-					end
-					break
-				end
-			end
-			task.wait(1)
-		end
-	end
-	return owned
 end
 
 local function isRateLimitError(err)
@@ -723,25 +689,33 @@ local function processPlayer(player)
 	setPhase(gui, "Checking badges...", "Syncing inventory...")
 
 	--========================================================
-	-- BATCH OWNERSHIP SWEEP (BYPASSES ROBLOX LIMITS)
+	-- NATIVE ROBLOX OWNERSHIP SWEEP (SILENT)
 	--========================================================
-	local badgeIdsToVerify = {}
-	for _, badge in ipairs(badges) do
+	for i, badge in ipairs(badges) do
 		if alreadyAwarded[tostring(badge.id)] then
 			ownedCount += 1
 		else
-			table.insert(badgeIdsToVerify, badge.id)
-		end
-	end
+			local success, hasBadge = false, false
+			local retries = 0
+			
+			-- Retries safely if Roblox drops the read request
+			while not success and retries < 5 do
+				success, hasBadge = pcall(function()
+					return BadgeService:UserHasBadgeAsync(player.UserId, badge.id)
+				end)
+				
+				if not success then
+					retries += 1
+					task.wait(0.2)
+				end
+			end
 
-	local webOwned = fetchOwnedBadgesBatch(player.UserId, badgeIdsToVerify)
-
-	for _, badgeId in ipairs(badgeIdsToVerify) do
-		if webOwned[tostring(badgeId)] then
-			ownedCount += 1
-			alreadyAwarded[tostring(badgeId)] = true
-		else
-			table.insert(toAward, { id = badgeId })
+			if success and hasBadge then
+				ownedCount += 1
+				alreadyAwarded[tostring(badge.id)] = true
+			else
+				table.insert(toAward, badge)
+			end
 		end
 	end
 
