@@ -1282,7 +1282,7 @@ local function processPlayer(player)
 				gui,
 				"Awarding badges...",
 				string.format(
-					"Awarded Badge: %s  •  Server: %d / %d",
+					"Awarded Badge: %s",
 					tostring(badge.id),
 					awardsThisServer,
 					AWARDS_PER_SERVER
