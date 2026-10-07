@@ -1342,55 +1342,22 @@ local function processPlayer(player)
 			-- ownedCount is NOT incremented.
 			-- awardsThisServer is NOT incremented.
 			-- The script does NOT move on as though it worked.
+			--
+			-- A failed badge remains unfinished. A server change
+			-- MUST NEVER happen because an award failed.
 			--================================================
 
-			if awardError == "RATE_LIMIT" then
-				setPhase(
-					gui,
-					"Switching servers...",
-					"Please wait..."
+			warn(
+				string.format(
+					"[BadgeChain] Badge %s failed to award (%s). Skipping for now.",
+					tostring(badge.id),
+					tostring(awardError)
 				)
-			else
-				setPhase(
-					gui,
-					"Switching servers...",
-					"Please wait..."
-				)
-			end
-
-			local teleported = teleportToNewServer(
-				player,
-				currentPlace,
-				alreadyAwarded,
-				gui,
-				awardError == "RATE_LIMIT"
-					and "Switching servers..."
-					or "Joining a new server..."
 			)
-
-			if teleported then
-				return
-			end
-
-			-- Teleport failed. Do not continue awarding from a
-			-- potentially rate-limited server.
-			while player.Parent do
-				task.wait(2)
-
-				local retry = teleportToNewServer(
-					player,
-					currentPlace,
-					alreadyAwarded,
-					gui,
-					"Trying to join a new server..."
-				)
-
-				if retry then
-					return
-				end
-			end
-
-			return
+			
+			-- Simply continue to the next badge. The failed badge
+			-- is not added to alreadyAwarded, so it will be retried
+			-- in the next server session.
 		end
 
 		task.wait(AWARD_DELAY)
