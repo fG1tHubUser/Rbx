@@ -15,7 +15,7 @@ local BadgeCache = DataStoreService:GetDataStore("BadgeChainCache")
 --============================================================
 -- CONFIGURATION
 --============================================================
-local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/F3B-Chain-IDs"
+local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/F3B-Auto-Badges/ID-Index"
 
 -- Roblox supports up to 100 IDs with GetUserBadgesAsync.
 local BADGE_CHECK_BATCH_SIZE = 100
