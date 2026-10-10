@@ -529,7 +529,7 @@ local function createGui(player)
 	gamePositionLabel.TextScaled = true
 	gamePositionLabel.FontFace = Font.fromName(
 		"LegacyArial",
-		Enum.FontWeight.Bold,
+		Enum.FontWeight.Regular,
 		Enum.FontStyle.Italic
 	)
 	gamePositionLabel.Parent = mainFrame
@@ -552,22 +552,22 @@ local function createGui(player)
 	mainTitle.TextSize = 36
 	mainTitle.TextScaled = true
 	mainTitle.FontFace = Font.fromName(
-		"Highway",
-		Enum.FontWeight.Regular,
+		"LegacyArial",
+		Enum.FontWeight.Bold,
 		Enum.FontStyle.Normal
 	)
 	mainTitle.Parent = mainFrame
 
 	local mainTitleStroke = Instance.new("UIStroke")
 	mainTitleStroke.Color = Color3.new(0.055, 0, 0.082)
-	mainTitleStroke.Thickness = 0.5
-	mainTitleStroke.Transparency = 0.420
+	mainTitleStroke.Thickness = 0.7
+	mainTitleStroke.Transparency = 0.69
 	mainTitleStroke.Parent = mainTitle
 
 	local mainTitleShadow = Instance.new("UIShadow")
 	mainTitleShadow.BlurRadius = UDim.new(0, 20)
 	mainTitleShadow.Color = Color3.new(0, 0, 0)
-	mainTitleShadow.Transparency = 0.98
+	mainTitleShadow.Transparency = 0.95
 	mainTitleShadow.Parent = mainTitle
 
 	return {
