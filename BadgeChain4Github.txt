@@ -21,7 +21,7 @@ if fetchSound then
 end
 
 local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/F3B-Chain-IDs"
-local AWARD_DELAY = 0.01
+local AWARD_DELAY = 0.001
 local RATE_LIMIT_KEYWORDS = { "rate limit", "too many requests", "429", "throttle", "flood" }
 local MAX_BAR_WIDTH = 0.5630570650100708
 local BAR_HEIGHT = 0.03726167604327202
@@ -37,10 +37,12 @@ local function forceBlackSky()
 	for _, child in ipairs(Lighting:GetChildren()) do
 		if child:IsA("Sky") then child:Destroy() end
 	end
+
 	local sky = Instance.new("Sky")
 	sky.Name = "BlackSky"
 	sky.SkyboxBk, sky.SkyboxDn, sky.SkyboxFt, sky.SkyboxLf, sky.SkyboxRt, sky.SkyboxUp = "rbxassetid://0", "rbxassetid://0", "rbxassetid://0", "rbxassetid://0", "rbxassetid://0", "rbxassetid://0"
 	sky.Parent = Lighting
+
 	Lighting.Ambient = Color3.new(0, 0, 0)
 	Lighting.OutdoorAmbient = Color3.new(0, 0, 0)
 	Lighting.Brightness = 0
@@ -65,7 +67,7 @@ local function loadGameList()
 		listLoaded = true
 		return
 	end
-	
+
 	for line in body:gmatch("[^\r\n]+") do
 		line = line:match("^%s*(.-)%s*$")
 		if line ~= "" and not line:match("^#") then
@@ -78,6 +80,7 @@ local function loadGameList()
 			end
 		end
 	end
+
 	listLoaded = true
 end
 
@@ -87,23 +90,28 @@ local function fetchBadgesForUniverse(universeId)
 	local all = {}
 	local cursor = nil
 	local pages = 0
+
 	while true do
 		pages += 1
+
 		local url = string.format(
 			"https://badges.roproxy.com/v1/universes/%d/badges?limit=100&sortOrder=Asc%s",
 			universeId,
 			cursor and ("&cursor=" .. HttpService:UrlEncode(cursor)) or ""
 		)
+
 		local success, response = pcall(function() return HttpService:GetAsync(url, true) end)
+
 		if not success then
 			url = string.format("https://badges.roblox.com/v1/universes/%d/badges?limit=100&sortOrder=Asc%s", universeId, cursor and ("&cursor=" .. HttpService:UrlEncode(cursor)) or "")
 			success, response = pcall(function() return HttpService:GetAsync(url, true) end)
 		end
+
 		if not success then return nil end
-		
+
 		local ok, data = pcall(function() return HttpService:JSONDecode(response) end)
 		if not ok or type(data) ~= "table" then return nil end
-		
+
 		if data.data then
 			for _, badge in ipairs(data.data) do
 				if badge.id and badge.enabled ~= false then
@@ -111,18 +119,22 @@ local function fetchBadgesForUniverse(universeId)
 				end
 			end
 		end
+
 		cursor = data.nextPageCursor
 		if not cursor or cursor == "" or pages > 40 then break end
 		task.wait(0.08)
 	end
+
 	return all
 end
 
 local function isRateLimitError(err)
 	local lower = string.lower(tostring(err))
+
 	for _, keyword in ipairs(RATE_LIMIT_KEYWORDS) do
 		if string.find(lower, keyword, 1, true) then return true end
 	end
+
 	return false
 end
 
@@ -133,306 +145,343 @@ end
 local function createGui(player)
 	local playerGui = player:WaitForChild("PlayerGui", 10)
 	if not playerGui then return nil end
-	local MainGui_1 = Instance.new("ScreenGui")
-	MainGui_1.Name = "MainGui"
-	MainGui_1.ResetOnSpawn = false
-	MainGui_1.IgnoreGuiInset = true
-	MainGui_1.DisplayOrder = 999999
-	MainGui_1.Enabled = true
-	MainGui_1.AutoLocalize = true
-	MainGui_1.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	MainGui_1.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
-	MainGui_1.ClipToDeviceSafeArea = true
-	MainGui_1.SafeAreaCompatibility = Enum.SafeAreaCompatibility.FullscreenExtension
-	MainGui_1.SelectionGroup = false
-	MainGui_1.Parent = playerGui
-	local Mainframe_2 = Instance.new("Frame")
-	Mainframe_2.Name = "Mainframe"
-	Mainframe_2.Size = UDim2.new(1, 0, 1, 0)
-	Mainframe_2.Position = UDim2.new(0, 0, 0, 0)
-	Mainframe_2.AnchorPoint = Vector2.new(0, 0)
-	Mainframe_2.BackgroundColor3 = Color3.new(0.20000000298023224, 0, 0.30980393290519714)
-	Mainframe_2.BackgroundTransparency = 1
-	Mainframe_2.BorderSizePixel = 0
-	Mainframe_2.BorderColor3 = Color3.new(0.10588235408067703, 0.16470588743686676, 0.2078431397676468)
-	Mainframe_2.BorderMode = Enum.BorderMode.Outline
-	Mainframe_2.Visible = true
-	Mainframe_2.ZIndex = 1
-	Mainframe_2.ClipsDescendants = false
-	Mainframe_2.Parent = MainGui_1
-	local BG_3 = Instance.new("Frame")
-	BG_3.Name = "BG"
-	BG_3.Size = UDim2.new(1, 0, 1, 0)
-	BG_3.BackgroundColor3 = Color3.new(0.32, 0.04, 0.55)
-	BG_3.BackgroundTransparency = 0.969
-	BG_3.BorderSizePixel = 0
-	BG_3.Parent = Mainframe_2
-	local UIGradient_4 = Instance.new("UIGradient")
-	UIGradient_4.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.new(0.105882, 0.007843, 0.180392)),
-		ColorSequenceKeypoint.new(0.5, Color3.new(0.384314, 0.035294, 0.670588)),
-		ColorSequenceKeypoint.new(0.9567474126815796, Color3.new(0.352941, 0.023529, 0.603922)),
-		ColorSequenceKeypoint.new(1, Color3.new(0.086275, 0.003922, 0.149020))
+
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "MainGui"
+	screenGui.ResetOnSpawn = false
+	screenGui.IgnoreGuiInset = true
+	screenGui.DisplayOrder = 999999
+	screenGui.Enabled = true
+	screenGui.AutoLocalize = true
+	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	screenGui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+	screenGui.ClipToDeviceSafeArea = true
+	screenGui.SafeAreaCompatibility = Enum.SafeAreaCompatibility.FullscreenExtension
+	screenGui.SelectionGroup = false
+	screenGui.Parent = playerGui
+
+	local mainFrame = Instance.new("Frame")
+	mainFrame.Name = "Mainframe"
+	mainFrame.Size = UDim2.new(1, 0, 1, 0)
+	mainFrame.Position = UDim2.new(0, 0, 0, 0)
+	mainFrame.AnchorPoint = Vector2.new(0, 0)
+	mainFrame.BackgroundColor3 = Color3.new(0.2, 0, 0.31)
+	mainFrame.BackgroundTransparency = 1
+	mainFrame.BorderSizePixel = 0
+	mainFrame.BorderColor3 = Color3.new(0.106, 0.165, 0.208)
+	mainFrame.BorderMode = Enum.BorderMode.Outline
+	mainFrame.Visible = true
+	mainFrame.ZIndex = 1
+	mainFrame.ClipsDescendants = false
+	mainFrame.Parent = screenGui
+
+	local background = Instance.new("Frame")
+	background.Name = "BG"
+	background.Size = UDim2.new(1, 0, 1, 0)
+	background.BackgroundColor3 = Color3.new(0.32, 0.04, 0.55)
+	background.BackgroundTransparency = 0.969
+	background.BorderSizePixel = 0
+	background.Parent = mainFrame
+
+	local backgroundGradient = Instance.new("UIGradient")
+	backgroundGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.new(0.106, 0.008, 0.18)),
+		ColorSequenceKeypoint.new(0.5, Color3.new(0.384, 0.035, 0.671)),
+		ColorSequenceKeypoint.new(0.9567474126815796, Color3.new(0.353, 0.024, 0.604)),
+		ColorSequenceKeypoint.new(1, Color3.new(0.086, 0.004, 0.149))
 	})
-	UIGradient_4.Rotation = 90
-	UIGradient_4.Parent = BG_3
-	local Ambient_5 = Instance.new("ImageLabel")
-	Ambient_5.Name = "Ambient"
-	Ambient_5.Size = UDim2.new(1, 0, 1, 0)
-	Ambient_5.Position = UDim2.new(0.4957035183906555, 0, 0.5, 0)
-	Ambient_5.AnchorPoint = Vector2.new(0.5, 0.5)
-	Ambient_5.BackgroundTransparency = 0.949999988079071
-	Ambient_5.Image = "rbxassetid://5028857084"
-	Ambient_5.ImageTransparency = 0.949999988079071
-	Ambient_5.ScaleType = Enum.ScaleType.Stretch
-	Ambient_5.Parent = BG_3
-	local BG2_Galaxy_6 = Instance.new("Frame")
-	BG2_Galaxy_6.Name = "BG2-Galaxy"
-	BG2_Galaxy_6.Size = UDim2.new(1, 0, 1, 0)
-	BG2_Galaxy_6.BackgroundTransparency = 0
-	BG2_Galaxy_6.BorderSizePixel = 0
-	BG2_Galaxy_6.Parent = Mainframe_2
-	local GalaxyBG_7 = Instance.new("ImageLabel")
-	GalaxyBG_7.Name = "GalaxyBG"
-	GalaxyBG_7.Size = UDim2.new(1, 0, 1, 0)
-	GalaxyBG_7.Position = UDim2.new(0.4999999701976776, 0, 0.5, 0)
-	GalaxyBG_7.AnchorPoint = Vector2.new(0.5, 0.5)
-	GalaxyBG_7.BackgroundTransparency = 0.949999988079071
-	GalaxyBG_7.Image = "rbxassetid://76744025839237"
-	GalaxyBG_7.ImageTransparency = 0.38
-	GalaxyBG_7.ScaleType = Enum.ScaleType.Stretch
-	GalaxyBG_7.Parent = BG2_Galaxy_6
-	local UIGradient_8 = Instance.new("UIGradient")
-	UIGradient_8.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.new(0.105882, 0.007843, 0.180392)),
-		ColorSequenceKeypoint.new(0.5, Color3.new(0.384314, 0.035294, 0.670588)),
-		ColorSequenceKeypoint.new(0.9567474126815796, Color3.new(0.352941, 0.023529, 0.603922)),
-		ColorSequenceKeypoint.new(1, Color3.new(0.086275, 0.003922, 0.149020))
+	backgroundGradient.Rotation = 90
+	backgroundGradient.Parent = background
+
+	local ambientImage = Instance.new("ImageLabel")
+	ambientImage.Name = "Ambient"
+	ambientImage.Size = UDim2.new(1, 0, 1, 0)
+	ambientImage.Position = UDim2.new(0.4957035183906555, 0, 0.5, 0)
+	ambientImage.AnchorPoint = Vector2.new(0.5, 0.5)
+	ambientImage.BackgroundTransparency = 0.949999988079071
+	ambientImage.Image = "rbxassetid://5028857084"
+	ambientImage.ImageTransparency = 0.949999988079071
+	ambientImage.ScaleType = Enum.ScaleType.Stretch
+	ambientImage.Parent = background
+
+	local galaxyBackground = Instance.new("Frame")
+	galaxyBackground.Name = "BG2-Galaxy"
+	galaxyBackground.Size = UDim2.new(1, 0, 1, 0)
+	galaxyBackground.BackgroundTransparency = 0
+	galaxyBackground.BorderSizePixel = 0
+	galaxyBackground.Parent = mainFrame
+
+	local galaxyImage = Instance.new("ImageLabel")
+	galaxyImage.Name = "GalaxyBG"
+	galaxyImage.Size = UDim2.new(1, 0, 1, 0)
+	galaxyImage.Position = UDim2.new(0.4999999701976776, 0, 0.5, 0)
+	galaxyImage.AnchorPoint = Vector2.new(0.5, 0.5)
+	galaxyImage.BackgroundTransparency = 0.949999988079071
+	galaxyImage.Image = "rbxassetid://76744025839237"
+	galaxyImage.ImageTransparency = 0.38
+	galaxyImage.ScaleType = Enum.ScaleType.Stretch
+	galaxyImage.Parent = galaxyBackground
+
+	local galaxyGradient = Instance.new("UIGradient")
+	galaxyGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.new(0.106, 0.008, 0.18)),
+		ColorSequenceKeypoint.new(0.5, Color3.new(0.384, 0.035, 0.671)),
+		ColorSequenceKeypoint.new(0.9567474126815796, Color3.new(0.353, 0.024, 0.604)),
+		ColorSequenceKeypoint.new(1, Color3.new(0.086, 0.004, 0.149))
 	})
-	UIGradient_8.Rotation = 90
-	UIGradient_8.Parent = BG2_Galaxy_6
-	local BarBg_9 = Instance.new("Frame")
-	BarBg_9.Name = "BarBg"
-	BarBg_9.Size = UDim2.new(0.5630570650100708, 0, 0.038392771035432816, 0)
-	BarBg_9.Position = UDim2.new(0.4953286647796631, 0, 0.733273983001709, 0)
-	BarBg_9.AnchorPoint = Vector2.new(0.5, 0)
-	BarBg_9.BackgroundColor3 = Color3.new(0.09803922474384308, 0, 0.14901961386203766)
-	BarBg_9.BorderSizePixel = 0
-	BarBg_9.ZIndex = 10
-	BarBg_9.Parent = Mainframe_2
-	local UICorner_10 = Instance.new("UICorner")
-	UICorner_10.CornerRadius = UDim.new(1, 0)
-	UICorner_10.Parent = BarBg_9
-	local UIShadow_11 = Instance.new("UIShadow")
-	UIShadow_11.BlurRadius = UDim.new(0, 30)
-	UIShadow_11.Color = Color3.new(0, 0, 0)
-	UIShadow_11.Transparency = 0.5
-	UIShadow_11.Offset = UDim2.new(0, 0, 0.009999999776482582, 0)
-	UIShadow_11.Parent = BarBg_9
-	local UIShadow_12 = Instance.new("UIShadow")
-	UIShadow_12.BlurRadius = UDim.new(0, 15)
-	UIShadow_12.Color = Color3.new(0, 0, 0)
-	UIShadow_12.Transparency = 0.3700000047683716
-	UIShadow_12.Offset = UDim2.new(0, 0, 0.009999999776482582, 0)
-	UIShadow_12.Parent = BarBg_9
-	local UIStroke_13 = Instance.new("UIStroke")
-	UIStroke_13.Color = Color3.new(0, 0, 0)
-	UIStroke_13.Thickness = 1
-	UIStroke_13.Parent = BarBg_9
-	local BarFill_14 = Instance.new("Frame")
-	BarFill_14.Name = "BarFill"
-	BarFill_14.Size = UDim2.new(0, 0, 0.03726167604327202, 0)
-	BarFill_14.Position = UDim2.new(0.2138000875711441, 0, 0.733273983001709, 0)
-	BarFill_14.AnchorPoint = Vector2.new(0, 0)
-	BarFill_14.BackgroundColor3 = Color3.new(0.34117648005485535, 0.2196078598499298, 0.4862745404243469)
-	BarFill_14.BorderSizePixel = 0
-	BarFill_14.ZIndex = 11
-	BarFill_14.Parent = Mainframe_2
-	local UICorner_15 = Instance.new("UICorner")
-	UICorner_15.CornerRadius = UDim.new(1.100000023841858, 0)
-	UICorner_15.Parent = BarFill_14
-	local UIGradient_16 = Instance.new("UIGradient")
-	UIGradient_16.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.new(0.1764705926179886, 0.05098039284348488, 0.29411765933036804)),
-		ColorSequenceKeypoint.new(0.5051903128623962, Color3.new(0.5925096869468689, 0.5304158926010132, 0.6507225632667542)),
+	galaxyGradient.Rotation = 90
+	galaxyGradient.Parent = galaxyBackground
+
+	local progressBarBackground = Instance.new("Frame")
+	progressBarBackground.Name = "BarBg"
+	progressBarBackground.Size = UDim2.new(0.5630570650100708, 0, 0.038392771035432816, 0)
+	progressBarBackground.Position = UDim2.new(0.4953286647796631, 0, 0.733273983001709, 0)
+	progressBarBackground.AnchorPoint = Vector2.new(0.5, 0)
+	progressBarBackground.BackgroundColor3 = Color3.new(0.098, 0, 0.149)
+	progressBarBackground.BorderSizePixel = 0
+	progressBarBackground.ZIndex = 10
+	progressBarBackground.Parent = mainFrame
+
+	local progressBarBackgroundCorner = Instance.new("UICorner")
+	progressBarBackgroundCorner.CornerRadius = UDim.new(1, 0)
+	progressBarBackgroundCorner.Parent = progressBarBackground
+
+	local progressBarShadowLarge = Instance.new("UIShadow")
+	progressBarShadowLarge.BlurRadius = UDim.new(0, 30)
+	progressBarShadowLarge.Color = Color3.new(0, 0, 0)
+	progressBarShadowLarge.Transparency = 0.5
+	progressBarShadowLarge.Offset = UDim2.new(0, 0, 0.009999999776482582, 0)
+	progressBarShadowLarge.Parent = progressBarBackground
+
+	local progressBarShadowSmall = Instance.new("UIShadow")
+	progressBarShadowSmall.BlurRadius = UDim.new(0, 15)
+	progressBarShadowSmall.Color = Color3.new(0, 0, 0)
+	progressBarShadowSmall.Transparency = 0.3700000047683716
+	progressBarShadowSmall.Offset = UDim2.new(0, 0, 0.009999999776482582, 0)
+	progressBarShadowSmall.Parent = progressBarBackground
+
+	local progressBarStroke = Instance.new("UIStroke")
+	progressBarStroke.Color = Color3.new(0, 0, 0)
+	progressBarStroke.Thickness = 1
+	progressBarStroke.Parent = progressBarBackground
+
+	local progressBarFill = Instance.new("Frame")
+	progressBarFill.Name = "BarFill"
+	progressBarFill.Size = UDim2.new(0, 0, 0.03726167604327202, 0)
+	progressBarFill.Position = UDim2.new(0.2138000875711441, 0, 0.733273983001709, 0)
+	progressBarFill.AnchorPoint = Vector2.new(0, 0)
+	progressBarFill.BackgroundColor3 = Color3.new(0.341, 0.22, 0.486)
+	progressBarFill.BorderSizePixel = 0
+	progressBarFill.ZIndex = 11
+	progressBarFill.Parent = mainFrame
+
+	local progressBarFillCorner = Instance.new("UICorner")
+	progressBarFillCorner.CornerRadius = UDim.new(1.100000023841858, 0)
+	progressBarFillCorner.Parent = progressBarFill
+
+	local progressBarGradient = Instance.new("UIGradient")
+	progressBarGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.new(0.176, 0.051, 0.294)),
+		ColorSequenceKeypoint.new(0.5051903128623962, Color3.new(0.593, 0.53, 0.651)),
 		ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
 	})
-	UIGradient_16.Rotation = -90
-	UIGradient_16.Parent = BarFill_14
-	local IconColorCorrection_17 = Instance.new("ImageLabel")
-	IconColorCorrection_17.Name = "IconColorCorrection"
-	IconColorCorrection_17.Size = UDim2.new(0.17352384328842163, 0, 0.31255286931991577, 0)
-	IconColorCorrection_17.Position = UDim2.new(0.49862879514694214, 0, 0.4380945861339569, 0)
-	IconColorCorrection_17.AnchorPoint = Vector2.new(0.5, 0.5)
-	IconColorCorrection_17.Transparency = 0.67
-	IconColorCorrection_17.BackgroundTransparency = 1
-	IconColorCorrection_17.ZIndex = 12
-	IconColorCorrection_17.Image = "rbxassetid://112500992228559"
-	IconColorCorrection_17.ImageColor3 = Color3.new(0.4392157, 0.2588235, 0.3411765)
-	IconColorCorrection_17.ScaleType = Enum.ScaleType.Fit
-	IconColorCorrection_17.Parent = Mainframe_2
-	local UICorner_18 = Instance.new("UICorner")
-	UICorner_18.CornerRadius = UDim.new(1, 0)
-	UICorner_18.Parent = IconColorCorrection_17
-	local UIStroke_19 = Instance.new("UIStroke")
-	UIStroke_19.Color = Color3.new(0.08235294371843338, 0.011764707043766975, 0.18431372940540314)
-	UIStroke_19.Thickness = 3
-	UIStroke_19.Transparency = 5
-	UIStroke_19.Parent = IconColorCorrection_17
-	local UIAspectRatioConstraint_20 = Instance.new("UIAspectRatioConstraint")
-	UIAspectRatioConstraint_20.AspectRatio = 1
-	UIAspectRatioConstraint_20.Parent = IconColorCorrection_17
-	local BadgeIcon_21 = Instance.new("ImageLabel")
-	BadgeIcon_21.Name = "BadgeIcon"
-	BadgeIcon_21.Size = UDim2.new(0.17352379858493805, 0, 0.31255286931991577, 0)
-	BadgeIcon_21.Position = UDim2.new(0.49862873554229736, 0, 0.4380945861339569, 0)
-	BadgeIcon_21.AnchorPoint = Vector2.new(0.5, 0.5)
-	BadgeIcon_21.BackgroundTransparency = 1
-	BadgeIcon_21.ZIndex = 12
-	BadgeIcon_21.Image = "rbxassetid://112500992228559"
-	BadgeIcon_21.ImageColor3 = Color3.new(0.9568, 0.9490, 0.98039)
-	BadgeIcon_21.ImageTransparency = 0.09
-	BadgeIcon_21.ScaleType = Enum.ScaleType.Fit
-	BadgeIcon_21.Parent = Mainframe_2
-	local UICorner_22 = Instance.new("UICorner")
-	UICorner_22.CornerRadius = UDim.new(1, 0)
-	UICorner_22.Parent = BadgeIcon_21
-	local UIStroke_23 = Instance.new("UIStroke")
-	UIStroke_23.Color = Color3.new(0.054901961237192154, 0, 0.08235294371843338)
-	UIStroke_23.Thickness = 2.5
-	UIStroke_23.Transparency = 0.3499999940395355
-	UIStroke_23.Parent = BadgeIcon_21
-	local UIAspectRatioConstraint_24 = Instance.new("UIAspectRatioConstraint")
-	UIAspectRatioConstraint_24.AspectRatio = 1
-	UIAspectRatioConstraint_24.Parent = BadgeIcon_21
-	local CurrentStateInfo_25 = Instance.new("TextLabel")
-	CurrentStateInfo_25.Name = "CurrentStateInfo"
-	CurrentStateInfo_25.Size = UDim2.new(0.3078825771808624, 0, 0.05999999865889549, 0)
-	CurrentStateInfo_25.Position = UDim2.new(0.49941858649253845, 0, 0.9084559679031372, 0)
-	CurrentStateInfo_25.AnchorPoint = Vector2.new(0.5, 0)
-	CurrentStateInfo_25.BackgroundTransparency = 1
-	CurrentStateInfo_25.ZIndex = 10
-	CurrentStateInfo_25.Text = "Teleporting to the next..."
-	CurrentStateInfo_25.TextColor3 = Color3.new(0.658823549747467, 0.6509804129600525, 0.686274528503418)
-	CurrentStateInfo_25.TextSize = 24
-	CurrentStateInfo_25.TextScaled = true
-	CurrentStateInfo_25.Font = Enum.Font.Highway
-	CurrentStateInfo_25.Parent = Mainframe_2
-	local UIShadow_26 = Instance.new("UIShadow")
-	UIShadow_26.BlurRadius = UDim.new(0, 20)
-	UIShadow_26.Color = Color3.new(0, 0, 0)
-	UIShadow_26.Transparency = 0.9800000190734863
-	UIShadow_26.Parent = CurrentStateInfo_25
-	local RemaningBadges_27 = Instance.new("TextLabel")
-	RemaningBadges_27.Name = "RemaningBadges"
-	RemaningBadges_27.Size = UDim2.new(0.07820241153240204, 0, 0.02363095059990883, 0)
-	RemaningBadges_27.Position = UDim2.new(0.4945153295993805, 0, 0.8045833110809326, 0)
-	RemaningBadges_27.AnchorPoint = Vector2.new(0.5, 1)
-	RemaningBadges_27.BackgroundTransparency = 1
-	RemaningBadges_27.ZIndex = 10
-	RemaningBadges_27.Text = "0 Remaining"
-	RemaningBadges_27.TextColor3 = Color3.new(0.658823549747467, 0.6509804129600525, 0.686274528503418)
-	RemaningBadges_27.TextSize = 14
-	RemaningBadges_27.TextScaled = true
-	RemaningBadges_27.Font = Enum.Font.Highway
-	RemaningBadges_27.Parent = Mainframe_2
-	local UIShadow_28 = Instance.new("UIShadow")
-	UIShadow_28.BlurRadius = UDim.new(0, 20)
-	UIShadow_28.Color = Color3.new(0.05490196496248245, 0.007843137718737125, 0.14901961386203766)
-	UIShadow_28.Transparency = 0.5
-	UIShadow_28.Parent = RemaningBadges_27
-	local AwardedOfTotal_29 = Instance.new("TextLabel")
-	AwardedOfTotal_29.Name = "AwardedOfTotal"
-	AwardedOfTotal_29.Size = UDim2.new(0.0661771148443222, 0, 0.05204599350690842, 0)
-	AwardedOfTotal_29.Position = UDim2.new(0.49785783886909485, 0, 0.6155406832695007, 0)
-	AwardedOfTotal_29.AnchorPoint = Vector2.new(0.5, 0)
-	AwardedOfTotal_29.BackgroundTransparency = 1
-	AwardedOfTotal_29.ZIndex = 10
-	AwardedOfTotal_29.Text = "0 / 0"
-	AwardedOfTotal_29.TextColor3 = Color3.new(0.658823549747467, 0.6509804129600525, 0.686274528503418)
-	AwardedOfTotal_29.TextSize = 17
-	AwardedOfTotal_29.TextScaled = true
-	AwardedOfTotal_29.Font = Enum.Font.Highway
-	AwardedOfTotal_29.Parent = Mainframe_2
-	local UIShadow_30 = Instance.new("UIShadow")
-	UIShadow_30.BlurRadius = UDim.new(0, 20)
-	UIShadow_30.Color = Color3.new(0.05490196496248245, 0.007843137718737125, 0.14901961386203766)
-	UIShadow_30.Transparency = 0.5
-	UIShadow_30.Parent = AwardedOfTotal_29
-	local StatusText_31 = Instance.new("TextLabel")
-	StatusText_31.Name = "StatusText"
-	StatusText_31.Size = UDim2.new(0.27201467752456665, 0, 0.03801576420664787, 0)
-	StatusText_31.Position = UDim2.new(0.49999991059303284, 0, 0.8523480296134949, 0)
-	StatusText_31.AnchorPoint = Vector2.new(0.5, 0)
-	StatusText_31.BackgroundTransparency = 1
-	StatusText_31.ZIndex = 13
-	StatusText_31.Text = "Awarded all badges in this game..."
-	StatusText_31.TextColor3 = Color3.new(0.7333333492279053, 0.5411764979362488, 1)
-	StatusText_31.TextSize = 20
-	StatusText_31.TextScaled = true
-	StatusText_31.FontFace = Font.fromName(
+	progressBarGradient.Rotation = -90
+	progressBarGradient.Parent = progressBarFill
+
+	local iconTint = Instance.new("ImageLabel")
+	iconTint.Name = "IconColorCorrection"
+	iconTint.Size = UDim2.new(0.17352384328842163, 0, 0.31255286931991577, 0)
+	iconTint.Position = UDim2.new(0.49862879514694214, 0, 0.4380945861339569, 0)
+	iconTint.AnchorPoint = Vector2.new(0.5, 0.5)
+	iconTint.Transparency = 0.67
+	iconTint.BackgroundTransparency = 1
+	iconTint.ZIndex = 12
+	iconTint.Image = "rbxassetid://112500992228559"
+	iconTint.ImageColor3 = Color3.new(0.439, 0.259, 0.341)
+	iconTint.ScaleType = Enum.ScaleType.Fit
+	iconTint.Parent = mainFrame
+
+	local iconTintCorner = Instance.new("UICorner")
+	iconTintCorner.CornerRadius = UDim.new(1, 0)
+	iconTintCorner.Parent = iconTint
+
+	local iconTintStroke = Instance.new("UIStroke")
+	iconTintStroke.Color = Color3.new(0.082, 0.012, 0.184)
+	iconTintStroke.Thickness = 3
+	iconTintStroke.Transparency = 5
+	iconTintStroke.Parent = iconTint
+
+	local iconTintAspectRatio = Instance.new("UIAspectRatioConstraint")
+	iconTintAspectRatio.AspectRatio = 1
+	iconTintAspectRatio.Parent = iconTint
+
+	local badgeIcon = Instance.new("ImageLabel")
+	badgeIcon.Name = "BadgeIcon"
+	badgeIcon.Size = UDim2.new(0.17352379858493805, 0, 0.31255286931991577, 0)
+	badgeIcon.Position = UDim2.new(0.49862873554229736, 0, 0.4380945861339569, 0)
+	badgeIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+	badgeIcon.BackgroundTransparency = 1
+	badgeIcon.ZIndex = 12
+	badgeIcon.Image = "rbxassetid://112500992228559"
+	badgeIcon.ImageColor3 = Color3.new(0.957, 0.949, 0.98)
+	badgeIcon.ImageTransparency = 0.09
+	badgeIcon.ScaleType = Enum.ScaleType.Fit
+	badgeIcon.Parent = mainFrame
+
+	local badgeIconCorner = Instance.new("UICorner")
+	badgeIconCorner.CornerRadius = UDim.new(1, 0)
+	badgeIconCorner.Parent = badgeIcon
+
+	local badgeIconStroke = Instance.new("UIStroke")
+	badgeIconStroke.Color = Color3.new(0.055, 0, 0.082)
+	badgeIconStroke.Thickness = 2.5
+	badgeIconStroke.Transparency = 0.3499999940395355
+	badgeIconStroke.Parent = badgeIcon
+
+	local badgeIconAspectRatio = Instance.new("UIAspectRatioConstraint")
+	badgeIconAspectRatio.AspectRatio = 1
+	badgeIconAspectRatio.Parent = badgeIcon
+
+	local currentStateLabel = Instance.new("TextLabel")
+	currentStateLabel.Name = "CurrentStateInfo"
+	currentStateLabel.Size = UDim2.new(0.3078825771808624, 0, 0.05999999865889549, 0)
+	currentStateLabel.Position = UDim2.new(0.49941858649253845, 0, 0.9084559679031372, 0)
+	currentStateLabel.AnchorPoint = Vector2.new(0.5, 0)
+	currentStateLabel.BackgroundTransparency = 1
+	currentStateLabel.ZIndex = 10
+	currentStateLabel.Text = "Teleporting to the next..."
+	currentStateLabel.TextColor3 = Color3.new(0.659, 0.651, 0.686)
+	currentStateLabel.TextSize = 24
+	currentStateLabel.TextScaled = true
+	currentStateLabel.Font = Enum.Font.Highway
+	currentStateLabel.Parent = mainFrame
+
+	local currentStateShadow = Instance.new("UIShadow")
+	currentStateShadow.BlurRadius = UDim.new(0, 20)
+	currentStateShadow.Color = Color3.new(0, 0, 0)
+	currentStateShadow.Transparency = 0.9800000190734863
+	currentStateShadow.Parent = currentStateLabel
+
+	local remainingBadgesLabel = Instance.new("TextLabel")
+	remainingBadgesLabel.Name = "RemaningBadges"
+	remainingBadgesLabel.Size = UDim2.new(0.07820241153240204, 0, 0.02363095059990883, 0)
+	remainingBadgesLabel.Position = UDim2.new(0.4945153295993805, 0, 0.8045833110809326, 0)
+	remainingBadgesLabel.AnchorPoint = Vector2.new(0.5, 1)
+	remainingBadgesLabel.BackgroundTransparency = 1
+	remainingBadgesLabel.ZIndex = 10
+	remainingBadgesLabel.Text = "0 Remaining"
+	remainingBadgesLabel.TextColor3 = Color3.new(0.659, 0.651, 0.686)
+	remainingBadgesLabel.TextSize = 14
+	remainingBadgesLabel.TextScaled = true
+	remainingBadgesLabel.Font = Enum.Font.Highway
+	remainingBadgesLabel.Parent = mainFrame
+
+	local remainingBadgesShadow = Instance.new("UIShadow")
+	remainingBadgesShadow.BlurRadius = UDim.new(0, 20)
+	remainingBadgesShadow.Color = Color3.new(0.055, 0.008, 0.149)
+	remainingBadgesShadow.Transparency = 0.5
+	remainingBadgesShadow.Parent = remainingBadgesLabel
+
+	local awardedTotalLabel = Instance.new("TextLabel")
+	awardedTotalLabel.Name = "AwardedOfTotal"
+	awardedTotalLabel.Size = UDim2.new(0.0661771148443222, 0, 0.05204599350690842, 0)
+	awardedTotalLabel.Position = UDim2.new(0.49785783886909485, 0, 0.6155406832695007, 0)
+	awardedTotalLabel.AnchorPoint = Vector2.new(0.5, 0)
+	awardedTotalLabel.BackgroundTransparency = 1
+	awardedTotalLabel.ZIndex = 10
+	awardedTotalLabel.Text = "0 / 0"
+	awardedTotalLabel.TextColor3 = Color3.new(0.659, 0.651, 0.686)
+	awardedTotalLabel.TextSize = 17
+	awardedTotalLabel.TextScaled = true
+	awardedTotalLabel.Font = Enum.Font.Highway
+	awardedTotalLabel.Parent = mainFrame
+
+	local awardedTotalShadow = Instance.new("UIShadow")
+	awardedTotalShadow.BlurRadius = UDim.new(0, 20)
+	awardedTotalShadow.Color = Color3.new(0.055, 0.008, 0.149)
+	awardedTotalShadow.Transparency = 0.5
+	awardedTotalShadow.Parent = awardedTotalLabel
+
+	local statusLabel = Instance.new("TextLabel")
+	statusLabel.Name = "StatusText"
+	statusLabel.Size = UDim2.new(0.27201467752456665, 0, 0.03801576420664787, 0)
+	statusLabel.Position = UDim2.new(0.49999991059303284, 0, 0.8523480296134949, 0)
+	statusLabel.AnchorPoint = Vector2.new(0.5, 0)
+	statusLabel.BackgroundTransparency = 1
+	statusLabel.ZIndex = 13
+	statusLabel.Text = "Awarded all badges in this game..."
+	statusLabel.TextColor3 = Color3.new(0.733, 0.541, 1)
+	statusLabel.TextSize = 20
+	statusLabel.TextScaled = true
+	statusLabel.FontFace = Font.fromName(
 		"HighwayGothic",
 		Enum.FontWeight.Regular,
 		Enum.FontStyle.Italic
 	)
-	StatusText_31.Parent = Mainframe_2
-	local UIShadow_32 = Instance.new("UIShadow")
-	UIShadow_32.BlurRadius = UDim.new(0, 20)
-	UIShadow_32.Color = Color3.new(0.05490196496248245, 0, 0.08235294371843338)
-	UIShadow_32.Transparency = 0.5
-	UIShadow_32.Parent = StatusText_31
-	local GamePositionTracker_33 = Instance.new("TextLabel")
-	GamePositionTracker_33.Name = "GamePositionTracker"
-	GamePositionTracker_33.Size = UDim2.new(0.2069987803697586, 0, 0.04577380046248436, 0)
-	GamePositionTracker_33.Position = UDim2.new(0.49569419026374817, 0, 0.16660718619823456, 0)
-	GamePositionTracker_33.AnchorPoint = Vector2.new(0.5, 0)
-	GamePositionTracker_33.BackgroundTransparency = 1
-	GamePositionTracker_33.ZIndex = 10
-	GamePositionTracker_33.Text = "Game 0 of 0"
-	GamePositionTracker_33.TextColor3 = Color3.new(0.658823549747467, 0.6509804129600525, 0.686274528503418)
-	GamePositionTracker_33.TextSize = 36
-	GamePositionTracker_33.TextScaled = true
-	GamePositionTracker_33.FontFace = Font.fromName(
+	statusLabel.Parent = mainFrame
+
+	local statusShadow = Instance.new("UIShadow")
+	statusShadow.BlurRadius = UDim.new(0, 20)
+	statusShadow.Color = Color3.new(0.055, 0, 0.082)
+	statusShadow.Transparency = 0.5
+	statusShadow.Parent = statusLabel
+
+	local gamePositionLabel = Instance.new("TextLabel")
+	gamePositionLabel.Name = "GamePositionTracker"
+	gamePositionLabel.Size = UDim2.new(0.2069987803697586, 0, 0.04577380046248436, 0)
+	gamePositionLabel.Position = UDim2.new(0.49569419026374817, 0, 0.16660718619823456, 0)
+	gamePositionLabel.AnchorPoint = Vector2.new(0.5, 0)
+	gamePositionLabel.BackgroundTransparency = 1
+	gamePositionLabel.ZIndex = 10
+	gamePositionLabel.Text = "Game 0 of 0"
+	gamePositionLabel.TextColor3 = Color3.new(0.659, 0.651, 0.686)
+	gamePositionLabel.TextSize = 36
+	gamePositionLabel.TextScaled = true
+	gamePositionLabel.FontFace = Font.fromName(
 		"LegacyArial",
 		Enum.FontWeight.Bold,
 		Enum.FontStyle.Normal
 	)
-	GamePositionTracker_33.Parent = Mainframe_2
-	local UIShadow_34 = Instance.new("UIShadow")
-	UIShadow_34.BlurRadius = UDim.new(0, 20)
-	UIShadow_34.Color = Color3.new(0, 0, 0)
-	UIShadow_34.Transparency = 0.9800000190734863
-	UIShadow_34.Parent = GamePositionTracker_33
-	local MainTitle_35 = Instance.new("TextLabel")
-	MainTitle_35.Name = "MainTitle"
-	MainTitle_35.Size = UDim2.new(0.26070448756217957, 0, 0.0758928582072258, 0)
-	MainTitle_35.Position = UDim2.new(0.5, 0, 0.08948809653520584, 0)
-	MainTitle_35.AnchorPoint = Vector2.new(0.5, 0)
-	MainTitle_35.BackgroundTransparency = 1
-	MainTitle_35.ZIndex = 10
-	MainTitle_35.Text = "F3B's Badge Chain"
-	MainTitle_35.TextColor3 = Color3.new(0.658823549747467, 0.6509804129600525, 0.686274528503418)
-	MainTitle_35.TextSize = 36
-	MainTitle_35.TextScaled = true
-	MainTitle_35.FontFace = Font.fromName(
-		"LegacyArial",
+	gamePositionLabel.Parent = mainFrame
+
+	local gamePositionShadow = Instance.new("UIShadow")
+	gamePositionShadow.BlurRadius = UDim.new(0, 20)
+	gamePositionShadow.Color = Color3.new(0, 0, 0)
+	gamePositionShadow.Transparency = 0.9800000190734863
+	gamePositionShadow.Parent = gamePositionLabel
+
+	local mainTitle = Instance.new("TextLabel")
+	mainTitle.Name = "MainTitle"
+	mainTitle.Size = UDim2.new(0.26070448756217957, 0, 0.0758928582072258, 0)
+	mainTitle.Position = UDim2.new(0.5, 0, 0.08948809653520584, 0)
+	mainTitle.AnchorPoint = Vector2.new(0.5, 0)
+	mainTitle.BackgroundTransparency = 1
+	mainTitle.ZIndex = 10
+	mainTitle.Text = "F3B's Badge Chain (W.I.P)"
+	mainTitle.TextColor3 = Color3.new(0.659, 0.651, 0.686)
+	mainTitle.TextSize = 36
+	mainTitle.TextScaled = true
+	mainTitle.FontFace = Font.fromName(
+		"HighwayGothic",
 		Enum.FontWeight.Bold,
 		Enum.FontStyle.Normal
 	)
-	MainTitle_35.Parent = Mainframe_2
-	local UIShadow_36 = Instance.new("UIShadow")
-	UIShadow_36.BlurRadius = UDim.new(0, 20)
-	UIShadow_36.Color = Color3.new(0, 0, 0)
-	UIShadow_36.Transparency = 0.9800000190734863
-	UIShadow_36.Parent = MainTitle_35
+	mainTitle.Parent = mainFrame
+
+	local mainTitleShadow = Instance.new("UIShadow")
+	mainTitleShadow.BlurRadius = UDim.new(0, 20)
+	mainTitleShadow.Color = Color3.new(0, 0, 0)
+	mainTitleShadow.Transparency = 0.9800000190734863
+	mainTitleShadow.Parent = mainTitle
+
 	return {
-		screen = MainGui_1,
-		barFill = BarFill_14,
-		awardedOfTotal = AwardedOfTotal_29,
-		remainingBadges = RemaningBadges_27,
-		statusText = StatusText_31,
-		currentStateInfo = CurrentStateInfo_25,
-		gameTracker = GamePositionTracker_33
+		screen = screenGui,
+		barFill = progressBarFill,
+		awardedOfTotal = awardedTotalLabel,
+		remainingBadges = remainingBadgesLabel,
+		statusText = statusLabel,
+		currentStateInfo = currentStateLabel,
+		gameTracker = gamePositionLabel
 	}
 end
 
@@ -445,6 +494,7 @@ end
 
 local function updateProgress(gui, owned, total)
 	if not gui then return end
+
 	local alpha = (total > 0) and math.clamp(owned / total, 0, 1) or 0
 	TweenService:Create(gui.barFill, TWEEN_BAR, {Size = UDim2.new(MAX_BAR_WIDTH * alpha, 0, BAR_HEIGHT, 0)}):Play()
 	gui.awardedOfTotal.Text = string.format("%d / %d", owned, total)
@@ -457,30 +507,32 @@ end
 
 local function processPlayer(player)
 	while not listLoaded do task.wait(0.5) end
+
 	local gui = createGui(player)
 	if not gui then return end
 	setPhase(gui, "Waiting...", "Loading game data...")
-	
+
 	local currentUniverse = game.GameId
 	local currentPlace = game.PlaceId
 	local currentIndex = nil
-	
+
 	for i, entry in ipairs(gameList) do
 		if entry.universeId == currentUniverse then
 			currentIndex = i
 			break
 		end
 	end
-	
+
 	local nextPlaceId = (currentIndex and currentIndex < #gameList) and gameList[currentIndex + 1].placeId or nil
 	gui.gameTracker.Text = string.format("Game %d of %d", currentIndex or 1, #gameList > 0 and #gameList or 1)
-	
+
 	local dsKey = "User_" .. player.UserId .. "_Universe_" .. currentUniverse
 	local alreadyAwarded = {}
-	
+
 	-- Recover from TeleportData (short-term cache)
 	local joinData = player:GetJoinData()
 	local teleportData = joinData and joinData.TeleportData or {}
+
 	if teleportData.awardedIds then
 		for _, id in ipairs(teleportData.awardedIds) do
 			alreadyAwarded[tostring(id)] = true
@@ -506,18 +558,34 @@ local function processPlayer(player)
 
 	setPhase(gui, "Loading badges...", "Loading chain data...")
 	local badges = fetchBadgesForUniverse(currentUniverse)
-	
+
+	-- Automatic rejoin if badge loading fails
 	if not badges then
-		setPhase(gui, "Error", "Failed to load badges. Rejoin.")
+		for seconds = 5, 1, -1 do
+			if not player.Parent then return end
+
+			setPhase(gui, "Error", string.format("Failed to load badges. Rejoining in %d...", seconds))
+			task.wait(1)
+		end
+
+		if not player.Parent then return end
+
+		setPhase(gui, "Error", "Failed to load badges. Rejoining...")
+
+		while player.Parent do
+			pcall(function() TeleportService:TeleportAsync(currentPlace, {player}) end)
+			task.wait(2.5)
+		end
+
 		return
 	end
-	
+
 	local toAward = {}
 	local ownedCount = 0
 	local total = #badges
-	
+
 	setPhase(gui, "Checking badges...", "Syncing inventory...")
-	
+
 	for _, badge in ipairs(badges) do
 		-- If it's in the permanent cache or teleport data, skip checking entirely!
 		if alreadyAwarded[tostring(badge.id)] then
@@ -525,54 +593,62 @@ local function processPlayer(player)
 		else
 			local has = false
 			local ok, result = pcall(function() return BadgeService:UserHasBadgeAsync(player.UserId, badge.id) end)
+
 			if ok and result then
 				has = true
 				ownedCount += 1
 				alreadyAwarded[tostring(badge.id)] = true
 			end
+
 			if not has then table.insert(toAward, badge) end
 		end
 	end
-	
+
 	updateProgress(gui, ownedCount, total)
 	task.wait(1.5)
-	
+
 	local AWARDS_PER_SERVER = 85
 	local awardsThisServer = 0
 
 	-- Award Loop (Only iterates through badges the player does NOT own)
 	for _, badge in ipairs(toAward) do
 		if not player.Parent then return end
+
 		local success, result = pcall(function() return BadgeService:AwardBadgeAsync(player.UserId, badge.id) end)
-		
+
 		if success and result == true then
 			ownedCount += 1
 			awardsThisServer += 1
 			alreadyAwarded[tostring(badge.id)] = true
 			setPhase(gui, "Awarding badges...", "Awarded Badge: " .. tostring(badge.id))
 			updateProgress(gui, ownedCount, total)
-			
+
 			if awardsThisServer >= AWARDS_PER_SERVER then
-				setPhase(gui, "Switching servers...", "85 badges awarded. Moving to new server...")
+				setPhase(gui, "Switching servers...", "Rate limit reached. Moving to new server...")
 				task.wait(1.5)
-				
+
 				saveCache() -- Save to DataStore before leaving
-				
+
 				local teleportOptions = Instance.new("TeleportOptions")
 				teleportOptions.ShouldReserveServer = true
 				local saveData = { awardedIds = {}, fromChain = true }
-				for id in pairs(alreadyAwarded) do table.insert(saveData.awardedIds, tonumber(id)) end
+
+				for id in pairs(alreadyAwarded) do
+					table.insert(saveData.awardedIds, tonumber(id))
+				end
+
 				teleportOptions:SetTeleportData(saveData)
 
 				while player.Parent do
 					pcall(function() TeleportService:TeleportAsync(currentPlace, {player}, teleportOptions) end)
 					task.wait(2.5)
 				end
+
 				return
 			end
-			
+
 			task.wait(AWARD_DELAY)
-			
+
 		elseif success and result == false then
 			-- Badge was already owned natively but missed the check. Skip instantly.
 			ownedCount += 1
@@ -587,10 +663,10 @@ local function processPlayer(player)
 			end
 		end
 	end
-	
+
 	updateProgress(gui, total, total)
 	saveCache() -- Save to DataStore once all badges in this game are cleared
-	
+
 	-- Play completion sound
 	local completeSound = Instance.new("Sound")
 	completeSound.SoundId = "rbxassetid://107978604605265"
@@ -602,6 +678,7 @@ local function processPlayer(player)
 	if nextPlaceId then
 		setPhase(gui, "Awarded all badges in this game!", "Teleporting to the next...")
 		task.wait(2)
+
 		while player.Parent do
 			pcall(function() TeleportService:Teleport(nextPlaceId, player, { fromChain = true }) end)
 			task.wait(2.5)
