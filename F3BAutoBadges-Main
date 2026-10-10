@@ -288,7 +288,7 @@ local function createGui(player)
 	ambientImage.Size = UDim2.new(1, 0, 1, 0)
 	ambientImage.Position = UDim2.new(0.4957035183906555, 0, 0.5, 0)
 	ambientImage.AnchorPoint = Vector2.new(0.5, 0.5)
-	ambientImage.BackgroundTransparency = 0.949999988079071
+	ambientImage.BackgroundTransparency = 0.95
 	ambientImage.Image = "rbxassetid://5028857084"
 	ambientImage.ImageTransparency = 0.949999988079071
 	ambientImage.ScaleType = Enum.ScaleType.Stretch
@@ -306,9 +306,9 @@ local function createGui(player)
 	galaxyImage.Size = UDim2.new(1, 0, 1, 0)
 	galaxyImage.Position = UDim2.new(0.4999999701976776, 0, 0.5, 0)
 	galaxyImage.AnchorPoint = Vector2.new(0.5, 0.5)
-	galaxyImage.BackgroundTransparency = 0.949999988079071
+	galaxyImage.BackgroundTransparency = 0.967
 	galaxyImage.Image = "rbxassetid://76744025839237"
-	galaxyImage.ImageTransparency = 0.38
+	galaxyImage.ImageTransparency = 0.295
 	galaxyImage.ScaleType = Enum.ScaleType.Stretch
 	galaxyImage.Parent = galaxyBackground
 
@@ -346,7 +346,7 @@ local function createGui(player)
 	local progressBarShadowSmall = Instance.new("UIShadow")
 	progressBarShadowSmall.BlurRadius = UDim.new(0, 15)
 	progressBarShadowSmall.Color = Color3.new(0, 0, 0)
-	progressBarShadowSmall.Transparency = 0.3700000047683716
+	progressBarShadowSmall.Transparency = 0.37
 	progressBarShadowSmall.Offset = UDim2.new(0, 0, 0.009999999776482582, 0)
 	progressBarShadowSmall.Parent = progressBarBackground
 
@@ -414,7 +414,7 @@ local function createGui(player)
 	badgeIcon.ZIndex = 12
 	badgeIcon.Image = "rbxassetid://112500992228559"
 	badgeIcon.ImageColor3 = Color3.new(0.957, 0.949, 0.98)
-	badgeIcon.ImageTransparency = 0.09
+	badgeIcon.ImageTransparency = 0.067
 	badgeIcon.ScaleType = Enum.ScaleType.Fit
 	badgeIcon.Parent = mainFrame
 
@@ -425,7 +425,7 @@ local function createGui(player)
 	local badgeIconStroke = Instance.new("UIStroke")
 	badgeIconStroke.Color = Color3.new(0.055, 0, 0.082)
 	badgeIconStroke.Thickness = 2.5
-	badgeIconStroke.Transparency = 0.3499999940395355
+	badgeIconStroke.Transparency = 0.35
 	badgeIconStroke.Parent = badgeIcon
 
 	local badgeIconAspectRatio = Instance.new("UIAspectRatioConstraint")
@@ -449,7 +449,7 @@ local function createGui(player)
 	local currentStateShadow = Instance.new("UIShadow")
 	currentStateShadow.BlurRadius = UDim.new(0, 20)
 	currentStateShadow.Color = Color3.new(0, 0, 0)
-	currentStateShadow.Transparency = 0.9800000190734863
+	currentStateShadow.Transparency = 0.98
 	currentStateShadow.Parent = currentStateLabel
 
 	local remainingBadgesLabel = Instance.new("TextLabel")
@@ -459,7 +459,7 @@ local function createGui(player)
 	remainingBadgesLabel.AnchorPoint = Vector2.new(0.5, 1)
 	remainingBadgesLabel.BackgroundTransparency = 1
 	remainingBadgesLabel.ZIndex = 10
-	remainingBadgesLabel.Text = "0 Remaining"
+	remainingBadgesLabel.Text = "- Remaining"
 	remainingBadgesLabel.TextColor3 = Color3.new(0.659, 0.651, 0.686)
 	remainingBadgesLabel.TextSize = 14
 	remainingBadgesLabel.TextScaled = true
@@ -479,7 +479,7 @@ local function createGui(player)
 	awardedTotalLabel.AnchorPoint = Vector2.new(0.5, 0)
 	awardedTotalLabel.BackgroundTransparency = 1
 	awardedTotalLabel.ZIndex = 10
-	awardedTotalLabel.Text = "0 / 0"
+	awardedTotalLabel.Text = "- / -"
 	awardedTotalLabel.TextColor3 = Color3.new(0.659, 0.651, 0.686)
 	awardedTotalLabel.TextSize = 17
 	awardedTotalLabel.TextScaled = true
@@ -523,21 +523,21 @@ local function createGui(player)
 	gamePositionLabel.AnchorPoint = Vector2.new(0.5, 0)
 	gamePositionLabel.BackgroundTransparency = 1
 	gamePositionLabel.ZIndex = 10
-	gamePositionLabel.Text = "Game 0 of 0"
+	gamePositionLabel.Text = "Game - of - "
 	gamePositionLabel.TextColor3 = Color3.new(0.659, 0.651, 0.686)
 	gamePositionLabel.TextSize = 36
 	gamePositionLabel.TextScaled = true
 	gamePositionLabel.FontFace = Font.fromName(
 		"LegacyArial",
 		Enum.FontWeight.Bold,
-		Enum.FontStyle.Normal
+		Enum.FontStyle.Italic
 	)
 	gamePositionLabel.Parent = mainFrame
 
 	local gamePositionShadow = Instance.new("UIShadow")
 	gamePositionShadow.BlurRadius = UDim.new(0, 20)
 	gamePositionShadow.Color = Color3.new(0, 0, 0)
-	gamePositionShadow.Transparency = 0.9800000190734863
+	gamePositionShadow.Transparency = 0.98
 	gamePositionShadow.Parent = gamePositionLabel
 
 	local mainTitle = Instance.new("TextLabel")
@@ -547,21 +547,27 @@ local function createGui(player)
 	mainTitle.AnchorPoint = Vector2.new(0.5, 0)
 	mainTitle.BackgroundTransparency = 1
 	mainTitle.ZIndex = 10
-	mainTitle.Text = "F3B's Badge Chain (W.I.P)"
+	mainTitle.Text = "F3B Auto Badges🎖️"
 	mainTitle.TextColor3 = Color3.new(0.659, 0.651, 0.686)
 	mainTitle.TextSize = 36
 	mainTitle.TextScaled = true
 	mainTitle.FontFace = Font.fromName(
-		"HighwayGothic",
-		Enum.FontWeight.Bold,
+		"Highway",
+		Enum.FontWeight.Regular,
 		Enum.FontStyle.Normal
 	)
 	mainTitle.Parent = mainFrame
 
+	local mainTitleStroke = Instance.new("UIStroke")
+	mainTitleStroke.Color = Color3.new(0.055, 0, 0.082)
+	mainTitleStroke.Thickness = 0.5
+	mainTitleStroke.Transparency = 0.420
+	mainTitleStroke.Parent = mainTitle
+
 	local mainTitleShadow = Instance.new("UIShadow")
 	mainTitleShadow.BlurRadius = UDim.new(0, 20)
 	mainTitleShadow.Color = Color3.new(0, 0, 0)
-	mainTitleShadow.Transparency = 0.9800000190734863
+	mainTitleShadow.Transparency = 0.98
 	mainTitleShadow.Parent = mainTitle
 
 	return {
@@ -654,7 +660,7 @@ local function processPlayer(player)
 	end
 
 	if not currentIndex then
-		setPhase(gui, "Error", "This experience was not found in ID-Index.")
+		setPhase(gui, "Error:", "This game was not found in the index!")
 		warn("[BadgeChain] Current universe " .. tostring(currentUniverse) .. " is missing from ID-Index.")
 		return
 	end
@@ -877,7 +883,7 @@ local function processPlayer(player)
 		end
 
 		-- Limit progress-bar work to every five badges.
-		if ownedCount % 5 == 0 or index == #toAward then
+		if ownedCount % 1 == 0 or index == #toAward then
 			updateProgress(gui, ownedCount, total)
 		end
 
@@ -888,7 +894,7 @@ local function processPlayer(player)
 			setPhase(
 				gui,
 				"Switching servers...",
-				"85 badge requests attempted. Moving to a fresh server..."
+				"Rate limit reached. Moving to a new server..."
 			)
 
 			saveCache()
@@ -959,7 +965,7 @@ local function processPlayer(player)
 				gui,
 				"Continuing chain...",
 				string.format(
-					"%d badges were not confirmed.",
+					"Warning: %d badges were not confirmed, please rejoin!",
 					math.max(0, total - ownedCount)
 				)
 			)
@@ -983,23 +989,23 @@ local function processPlayer(player)
 				warn("[BadgeChain] Next-game teleport failed: " .. tostring(teleportError))
 			end
 
-			task.wait(2.5)
+			task.wait(4.20)
 		end
 	else
 		if ownedCount >= total then
 			setPhase(
 				gui,
-				"Come back tomorrow for more badges!",
+				"Come back soon for more badges!",
 				"Chain complete!"
 			)
 
-			gui.remainingBadges.Text = "All badges awarded in every game!"
+			gui.remainingBadges.Text = "Chain complete!"
 		else
 			setPhase(
 				gui,
-				"Chain ended with some failures.",
+				"Chain ended with some failures...",
 				string.format(
-					"%d badges were not confirmed.",
+					"%d badges were not confirmed!",
 					math.max(0, total - ownedCount)
 				)
 			)
