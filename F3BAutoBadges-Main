@@ -308,7 +308,7 @@ local function createGui(player)
 	galaxyImage.AnchorPoint = Vector2.new(0.5, 0.5)
 	galaxyImage.BackgroundTransparency = 0.967
 	galaxyImage.Image = "rbxassetid://76744025839237"
-	galaxyImage.ImageTransparency = 0.22
+	galaxyImage.ImageTransparency = 0.33
 	galaxyImage.ScaleType = Enum.ScaleType.Stretch
 	galaxyImage.Parent = galaxyBackground
 
@@ -383,7 +383,7 @@ local function createGui(player)
 	iconTint.Size = UDim2.new(0.17352384328842163, 0, 0.31255286931991577, 0)
 	iconTint.Position = UDim2.new(0.49862879514694214, 0, 0.4380945861339569, 0)
 	iconTint.AnchorPoint = Vector2.new(0.5, 0.5)
-	iconTint.Transparency = 0.69420
+	iconTint.Transparency = 0.77
 	iconTint.BackgroundTransparency = 1
 	iconTint.ZIndex = 12
 	iconTint.Image = "rbxassetid://112500992228559"
@@ -424,8 +424,8 @@ local function createGui(player)
 
 	local badgeIconStroke = Instance.new("UIStroke")
 	badgeIconStroke.Color = Color3.new(0.055, 0, 0.082)
-	badgeIconStroke.Thickness = 2.5
-	badgeIconStroke.Transparency = 0.35
+	badgeIconStroke.Thickness = 1.97
+	badgeIconStroke.Transparency = 0.420
 	badgeIconStroke.Parent = badgeIcon
 
 	local badgeIconAspectRatio = Instance.new("UIAspectRatioConstraint")
@@ -529,15 +529,15 @@ local function createGui(player)
 	gamePositionLabel.TextScaled = true
 	gamePositionLabel.FontFace = Font.fromName(
 		"LegacyArial",
-		Enum.FontWeight.Regular,
+		Enum.FontWeight.Bold,
 		Enum.FontStyle.Normal
 	)
 	gamePositionLabel.Parent = mainFrame
 
 	local gamePositionStroke = Instance.new("UIStroke")
 	gamePositionStroke.Color = Color3.new(0.055, 0, 0.082)
-	gamePositionStroke.Thickness = 0.7
-	gamePositionStroke.Transparency = 0.69
+	gamePositionStroke.Thickness = 1
+	gamePositionStroke.Transparency = 0.777
 	gamePositionStroke.Parent = gamePositionLabel
 
 	local gamePositionShadow = Instance.new("UIShadow")
@@ -558,16 +558,16 @@ local function createGui(player)
 	mainTitle.TextSize = 36
 	mainTitle.TextScaled = true
 	mainTitle.FontFace = Font.fromName(
-		"LegacyArial",
-		Enum.FontWeight.Bold,
+		"HighwayGothic",
+		Enum.FontWeight.Regular,
 		Enum.FontStyle.Normal
 	)
 	mainTitle.Parent = mainFrame
 
 	local mainTitleStroke = Instance.new("UIStroke")
 	mainTitleStroke.Color = Color3.new(0.055, 0, 0.082)
-	mainTitleStroke.Thickness = 0.7
-	mainTitleStroke.Transparency = 0.69
+	mainTitleStroke.Thickness = 1
+	mainTitleStroke.Transparency = 0.777
 	mainTitleStroke.Parent = mainTitle
 
 	local mainTitleShadow = Instance.new("UIShadow")
@@ -735,7 +735,7 @@ local function processPlayer(player)
 
 	if not badges then
 		-- Stop here rather than accidentally skipping to the next experience.
-		setPhase(gui, "Error", "Badge loading failed. Staying on this game.")
+		setPhase(gui, "Error:", "Badges failed to load. Please rejoin!")
 		return
 	end
 
@@ -935,7 +935,7 @@ local function processPlayer(player)
 					warn("[BadgeChain] Server-hop teleport failed: " .. tostring(teleportError))
 				end
 
-				task.wait(2.5)
+				task.wait(3.333)
 			end
 
 			return
@@ -995,7 +995,7 @@ local function processPlayer(player)
 				warn("[BadgeChain] Next-game teleport failed: " .. tostring(teleportError))
 			end
 
-			task.wait(4.20)
+			task.wait(3.333)
 		end
 	else
 		if ownedCount >= total then
