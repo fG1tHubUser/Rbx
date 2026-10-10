@@ -290,7 +290,7 @@ local function createGui(player)
 	ambientImage.AnchorPoint = Vector2.new(0.5, 0.5)
 	ambientImage.BackgroundTransparency = 0.95
 	ambientImage.Image = "rbxassetid://5028857084"
-	ambientImage.ImageTransparency = 0.949999988079071
+	ambientImage.ImageTransparency = 0.95
 	ambientImage.ScaleType = Enum.ScaleType.Stretch
 	ambientImage.Parent = background
 
@@ -308,7 +308,7 @@ local function createGui(player)
 	galaxyImage.AnchorPoint = Vector2.new(0.5, 0.5)
 	galaxyImage.BackgroundTransparency = 0.967
 	galaxyImage.Image = "rbxassetid://76744025839237"
-	galaxyImage.ImageTransparency = 0.295
+	galaxyImage.ImageTransparency = 0.22
 	galaxyImage.ScaleType = Enum.ScaleType.Stretch
 	galaxyImage.Parent = galaxyBackground
 
@@ -383,7 +383,7 @@ local function createGui(player)
 	iconTint.Size = UDim2.new(0.17352384328842163, 0, 0.31255286931991577, 0)
 	iconTint.Position = UDim2.new(0.49862879514694214, 0, 0.4380945861339569, 0)
 	iconTint.AnchorPoint = Vector2.new(0.5, 0.5)
-	iconTint.Transparency = 0.67
+	iconTint.Transparency = 0.69420
 	iconTint.BackgroundTransparency = 1
 	iconTint.ZIndex = 12
 	iconTint.Image = "rbxassetid://112500992228559"
@@ -414,7 +414,7 @@ local function createGui(player)
 	badgeIcon.ZIndex = 12
 	badgeIcon.Image = "rbxassetid://112500992228559"
 	badgeIcon.ImageColor3 = Color3.new(0.957, 0.949, 0.98)
-	badgeIcon.ImageTransparency = 0.067
+	badgeIcon.ImageTransparency = 0.042069
 	badgeIcon.ScaleType = Enum.ScaleType.Fit
 	badgeIcon.Parent = mainFrame
 
@@ -459,7 +459,7 @@ local function createGui(player)
 	remainingBadgesLabel.AnchorPoint = Vector2.new(0.5, 1)
 	remainingBadgesLabel.BackgroundTransparency = 1
 	remainingBadgesLabel.ZIndex = 10
-	remainingBadgesLabel.Text = "- Remaining"
+	remainingBadgesLabel.Text = " - Remaining"
 	remainingBadgesLabel.TextColor3 = Color3.new(0.659, 0.651, 0.686)
 	remainingBadgesLabel.TextSize = 14
 	remainingBadgesLabel.TextScaled = true
@@ -530,9 +530,15 @@ local function createGui(player)
 	gamePositionLabel.FontFace = Font.fromName(
 		"LegacyArial",
 		Enum.FontWeight.Regular,
-		Enum.FontStyle.Italic
+		Enum.FontStyle.Normal
 	)
 	gamePositionLabel.Parent = mainFrame
+
+	local gamePositionStroke = Instance.new("UIStroke")
+	gamePositionStroke.Color = Color3.new(0.055, 0, 0.082)
+	gamePositionStroke.Thickness = 0.7
+	gamePositionStroke.Transparency = 0.69
+	gamePositionStroke.Parent = gamePositionLabel
 
 	local gamePositionShadow = Instance.new("UIShadow")
 	gamePositionShadow.BlurRadius = UDim.new(0, 20)
@@ -547,7 +553,7 @@ local function createGui(player)
 	mainTitle.AnchorPoint = Vector2.new(0.5, 0)
 	mainTitle.BackgroundTransparency = 1
 	mainTitle.ZIndex = 10
-	mainTitle.Text = "F3B Auto Badges🎖️"
+	mainTitle.Text = "F3B's Auto Badges"
 	mainTitle.TextColor3 = Color3.new(0.659, 0.651, 0.686)
 	mainTitle.TextSize = 36
 	mainTitle.TextScaled = true
