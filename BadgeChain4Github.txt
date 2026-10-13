@@ -19,6 +19,7 @@ local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/
 local BADGE_CHECK_BATCH_SIZE = 100
 local AWARDS_PER_SERVER = 85
 local POST_AWARD_WAIT = 4.20 -- seconds to wait after awarding all badges before teleporting (change this value easily)
+local PRE_AWARD_WAIT = 1.8 -- seconds to wait before starting to award badges (change this value easily)
 
 local RATE_LIMIT_KEYWORDS = {
 	"rate limit",
@@ -37,7 +38,7 @@ local TWEEN_BAR = TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirectio
 --============================================================
 local ATTEMPT_LIMIT = 6
 local RETRY_DELAY = 4.20
-local FLOOD_DELAY = 10
+local FLOOD_DELAY = 8.40
 
 local function SafeTeleport(placeId, players, options)
 	local attemptIndex = 0
@@ -882,6 +883,9 @@ local function processPlayer(player)
 	--========================================================
 	-- AWARD BADGES
 	--========================================================
+	setPhase(gui, "Preparing to award...", "Waiting before awarding...")
+	task.wait(PRE_AWARD_WAIT)
+
 	local awardAttemptsThisServer = 0
 
 	for index, badge in ipairs(toAward) do
