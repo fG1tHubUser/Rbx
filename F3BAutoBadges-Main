@@ -289,8 +289,8 @@ local function createGui(player)
 	mainFrame.Size = UDim2.new(1, 0, 1, 0)
 	mainFrame.Position = UDim2.new(0, 0, 0, 0)
 	mainFrame.AnchorPoint = Vector2.new(0, 0)
-	mainFrame.BackgroundColor3 = Color3.new(0.2, 0, 0.31)
-	mainFrame.BackgroundTransparency = 1
+	mainFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+	mainFrame.BackgroundTransparency = 0
 	mainFrame.BorderSizePixel = 0
 	mainFrame.BorderColor3 = Color3.new(0.106, 0.165, 0.208)
 	mainFrame.BorderMode = Enum.BorderMode.Outline
@@ -342,7 +342,7 @@ local function createGui(player)
 	galaxyImage.AnchorPoint = Vector2.new(0.5, 0.5)
 	galaxyImage.BackgroundTransparency = 0.967
 	galaxyImage.Image = "rbxassetid://76744025839237"
-	galaxyImage.ImageTransparency = 0
+	galaxyImage.ImageTransparency = 0.25
 	galaxyImage.ScaleType = Enum.ScaleType.Stretch
 	galaxyImage.Parent = galaxyBackground
 
