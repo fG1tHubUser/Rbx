@@ -32,6 +32,66 @@ local BAR_HEIGHT = 0.03726167604327202
 local TWEEN_BAR = TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
 --============================================================
+-- SAFE TELEPORT (only change)
+--============================================================
+local ATTEMPT_LIMIT = 8
+local RETRY_DELAY = 1.5
+local FLOOD_DELAY = 15
+
+local function SafeTeleport(placeId, players, options)
+	local attemptIndex = 0
+	local success, result
+
+	repeat
+		success, result = pcall(function()
+			return TeleportService:TeleportAsync(placeId, players, options)
+		end)
+		attemptIndex += 1
+
+		if not success then
+			local errStr = string.lower(tostring(result))
+			if string.find(errStr, "flood", 1, true)
+				or string.find(errStr, "throttl", 1, true)
+				or string.find(errStr, "already in progress", 1, true)
+				or string.find(errStr, "too many requests", 1, true)
+				or string.find(errStr, "429", 1, true)
+			then
+				task.wait(FLOOD_DELAY)
+			else
+				task.wait(RETRY_DELAY)
+			end
+		end
+	until success or attemptIndex >= ATTEMPT_LIMIT
+
+	return success, result
+end
+
+-- Handle the case where TeleportAsync succeeds but the teleport later fails
+TeleportService.TeleportInitFailed:Connect(function(player, teleportResult, errorMessage, placeId, teleportOptions)
+	if teleportResult == Enum.TeleportResult.Flooded then
+		task.wait(FLOOD_DELAY)
+	elseif teleportResult == Enum.TeleportResult.Failure then
+		task.wait(RETRY_DELAY)
+	else
+		-- permanent / invalid – do not retry forever
+		warn(string.format(
+			"[BadgeChain] TeleportInitFailed [%s]: %s (place %s)",
+			tostring(teleportResult),
+			tostring(errorMessage),
+			tostring(placeId)
+		))
+		return
+	end
+
+	-- only retry if the player is still here
+	if player and player.Parent then
+		pcall(function()
+			TeleportService:TeleportAsync(placeId, {player}, teleportOptions)
+		end)
+	end
+end)
+
+--============================================================
 -- MUTE LOADER SOUND
 --============================================================
 local fetchSound = SoundService:FindFirstChild("FetchSuccess")
@@ -922,22 +982,16 @@ local function processPlayer(player)
 
 			teleportOptions:SetTeleportData(saveData)
 
-			while player.Parent do
-				local teleportOk, teleportError = pcall(function()
-					TeleportService:TeleportAsync(
-						currentPlace,
-						{ player },
-						teleportOptions
-					)
-				end)
-
-				if not teleportOk then
-					warn("[BadgeChain] Server-hop teleport failed: " .. tostring(teleportError))
-				end
-
-				task.wait(2.5)
+			-- Improved teleport – only change
+			local ok, err = SafeTeleport(currentPlace, {player}, teleportOptions)
+			if not ok then
+				warn("[BadgeChain] Server-hop teleport failed after retries: " .. tostring(err))
 			end
 
+			-- Keep the player here until they actually leave (SafeTeleport + TeleportInitFailed handle retries)
+			while player.Parent do
+				task.wait(1)
+			end
 			return
 		end
 	end
@@ -982,20 +1036,15 @@ local function processPlayer(player)
 			fromChain = true
 		})
 
+		-- Improved teleport – only change
+		local ok, err = SafeTeleport(nextPlaceId, {player}, teleportOptions)
+		if not ok then
+			warn("[BadgeChain] Next-game teleport failed after retries: " .. tostring(err))
+		end
+
+		-- Keep the player here until they actually leave
 		while player.Parent do
-			local teleportOk, teleportError = pcall(function()
-				TeleportService:TeleportAsync(
-					nextPlaceId,
-					{ player },
-					teleportOptions
-				)
-			end)
-
-			if not teleportOk then
-				warn("[BadgeChain] Next-game teleport failed: " .. tostring(teleportError))
-			end
-
-			task.wait(2.5)
+			task.wait(1)
 		end
 	else
 		if ownedCount >= total then
