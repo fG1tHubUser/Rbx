@@ -18,6 +18,7 @@ local BadgeCache = DataStoreService:GetDataStore("BadgeChainCache")
 local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/F3B-Badge-Chain/ID-Index"
 local BADGE_CHECK_BATCH_SIZE = 100
 local AWARDS_PER_SERVER = 85
+local POST_AWARD_WAIT = 5 -- seconds to wait after awarding all badges before teleporting (change this value easily)
 
 local RATE_LIMIT_KEYWORDS = {
 	"rate limit",
@@ -794,8 +795,18 @@ local function processPlayer(player)
 	local badges = fetchBadgesForUniverse(currentUniverse)
 
 	if not badges then
-		-- Stop here rather than accidentally skipping to the next experience.
-		setPhase(gui, "Error:", "Badges failed to load. Please rejoin!")
+		-- Failsafe: auto-rejoin instead of requiring manual rejoin.
+		setPhase(gui, "Error:", "Badges failed to load. Auto-rejoining...")
+		task.wait(2)
+		local teleportOptions = Instance.new("TeleportOptions")
+		teleportOptions.ShouldReserveServer = true
+		local ok, err = SafeTeleport(currentPlace, {player}, teleportOptions)
+		if not ok then
+			warn("[BadgeChain] Auto-rejoin teleport failed after retries: " .. tostring(err))
+		end
+		while player.Parent do
+			task.wait(1)
+		end
 		return
 	end
 
@@ -1030,6 +1041,9 @@ local function processPlayer(player)
 				)
 			)
 		end
+
+		-- Configurable wait after awarding before teleporting
+		task.wait(POST_AWARD_WAIT)
 
 		local teleportOptions = Instance.new("TeleportOptions")
 		teleportOptions:SetTeleportData({
