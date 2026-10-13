@@ -18,7 +18,7 @@ local BadgeCache = DataStoreService:GetDataStore("BadgeChainCache")
 local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/F3B-Badge-Chain/ID-Index"
 local BADGE_CHECK_BATCH_SIZE = 100
 local AWARDS_PER_SERVER = 85
-local POST_AWARD_WAIT = 5 -- seconds to wait after awarding all badges before teleporting (change this value easily)
+local POST_AWARD_WAIT = 4.20 -- seconds to wait after awarding all badges before teleporting (change this value easily)
 
 local RATE_LIMIT_KEYWORDS = {
 	"rate limit",
@@ -36,8 +36,8 @@ local TWEEN_BAR = TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirectio
 -- SAFE TELEPORT (only change)
 --============================================================
 local ATTEMPT_LIMIT = 5
-local RETRY_DELAY = 5
-local FLOOD_DELAY = 20
+local RETRY_DELAY = 2.67
+local FLOOD_DELAY = 10
 
 local function SafeTeleport(placeId, players, options)
 	local attemptIndex = 0
@@ -104,34 +104,6 @@ end
 -- ENVIRONMENT SETUP
 --============================================================
 Players.CharacterAutoLoads = false
-
-local function forceBlackSky()
-	for _, child in ipairs(Lighting:GetChildren()) do
-		if child:IsA("Sky") then
-			child:Destroy()
-		end
-	end
-
-	local sky = Instance.new("Sky")
-	sky.Name = "BlackSky"
-	sky.SkyboxBk = "rbxassetid://0"
-	sky.SkyboxDn = "rbxassetid://0"
-	sky.SkyboxFt = "rbxassetid://0"
-	sky.SkyboxLf = "rbxassetid://0"
-	sky.SkyboxRt = "rbxassetid://0"
-	sky.SkyboxUp = "rbxassetid://0"
-	sky.Parent = Lighting
-
-	Lighting.Ambient = Color3.new(0, 0, 0)
-	Lighting.OutdoorAmbient = Color3.new(0, 0, 0)
-	Lighting.Brightness = 0
-	Lighting.FogEnd = 0
-	Lighting.FogStart = 0
-	Lighting.ClockTime = 0
-end
-
-forceBlackSky()
-
 --============================================================
 -- STATE & CHAIN DATA
 --============================================================
@@ -330,7 +302,7 @@ local function createGui(player)
 	background.Name = "BG"
 	background.Size = UDim2.new(1, 0, 1, 0)
 	background.BackgroundColor3 = Color3.new(0.32, 0.04, 0.55)
-	background.BackgroundTransparency = 0.969
+	background.BackgroundTransparency = 1
 	background.BorderSizePixel = 0
 	background.Parent = mainFrame
 
@@ -369,7 +341,7 @@ local function createGui(player)
 	galaxyImage.AnchorPoint = Vector2.new(0.5, 0.5)
 	galaxyImage.BackgroundTransparency = 0.967
 	galaxyImage.Image = "rbxassetid://76744025839237"
-	galaxyImage.ImageTransparency = 0.33
+	galaxyImage.ImageTransparency = 0
 	galaxyImage.ScaleType = Enum.ScaleType.Stretch
 	galaxyImage.Parent = galaxyBackground
 
