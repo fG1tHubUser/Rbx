@@ -35,8 +35,8 @@ local TWEEN_BAR = TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirectio
 --============================================================
 -- SAFE TELEPORT (only change)
 --============================================================
-local ATTEMPT_LIMIT = 5
-local RETRY_DELAY = 2.67
+local ATTEMPT_LIMIT = 6
+local RETRY_DELAY = 4.20
 local FLOOD_DELAY = 10
 
 local function SafeTeleport(placeId, players, options)
