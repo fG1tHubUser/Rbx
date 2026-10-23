@@ -1,10 +1,3 @@
---[[
-	F3B Badge Chain - Official CoreGui Notification Override (Violet)
-	Uses real StarterGui:SetCore so stacking, early-dismissal, animation,
-	position and sound are identical to Roblox's own badge notifications.
-	Gold medals are permanently suppressed. Violet icon forced.
-]]
-
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local BadgeService = game:GetService("BadgeService")
@@ -15,7 +8,6 @@ local SoundService = game:GetService("SoundService")
 local DataStoreService = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local MarketplaceService = game:GetService("MarketplaceService")
-local StarterGui = game:GetService("StarterGui")
 
 --============================================================
 -- PERMANENT CACHE STORE
@@ -28,8 +20,8 @@ local BadgeCache = DataStoreService:GetDataStore("BadgeChainCache")
 local CHAIN_URL = "https://raw.githubusercontent.com/fG1tHubUser/Rbx/refs/heads/main/F3B-Badge-Chain/ID-Index"
 local BADGE_CHECK_BATCH_SIZE = 100
 local AWARDS_PER_SERVER = 85
-local POST_AWARD_WAIT = 4.20 -- seconds to wait after awarding all badges before teleporting (change this value easily)
-local PRE_AWARD_WAIT = 1.8 -- seconds to wait before starting to award badges (change this value easily)
+local POST_AWARD_WAIT = 4.20
+local PRE_AWARD_WAIT = 1.8
 
 local RATE_LIMIT_KEYWORDS = {
 	"rate limit",
@@ -44,106 +36,16 @@ local BAR_HEIGHT = 0.03726167604327202
 local TWEEN_BAR = TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
 --============================================================
--- OFFICIAL NOTIFICATION SYSTEM (ONLY ADDITION)
+-- OFFICIAL-STYLE BADGE NOTIFICATION
 --============================================================
-local VIOLET_ICON = "rbxassetid://105057612780097"
+local VIOLET_ICON = "rbxassetid://105057612780097" -- BadgeIcon_Violet
 
-local notifyRemote = ReplicatedStorage:FindFirstChild("BadgeChain_Notify")
-if not notifyRemote then
-	notifyRemote = Instance.new("RemoteEvent")
-	notifyRemote.Name = "BadgeChain_Notify"
-	notifyRemote.Parent = ReplicatedStorage
-end
-
--- Client LocalScript – forces real CoreGui + violet icon + aggressive disable
-local clientSource = [[
-local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local remote = ReplicatedStorage:WaitForChild("BadgeChain_Notify", 30)
-
--- Keep BadgesNotificationsActive = false for the entire session
--- (CoreScripts load asynchronously, so we hammer it)
-task.spawn(function()
-	for i = 1, 80 do
-		pcall(function()
-			StarterGui:SetCore("BadgesNotificationsActive", false)
-		end)
-		task.wait(0.08)
-	end
-	while true do
-		pcall(function()
-			StarterGui:SetCore("BadgesNotificationsActive", false)
-		end)
-		task.wait(1.5)
-	end
-end)
-
-if remote then
-	remote.OnClientEvent:Connect(function(playerName, creatorName, badgeName)
-		pcall(function()
-			StarterGui:SetCore("BadgesNotificationsActive", false)
-		end)
-		pcall(function()
-			StarterGui:SetCore("SendNotification", {
-				Title = "Badge Awarded",
-				Text = string.format('%s won %s\'s "%s" award!',
-					tostring(playerName),
-					tostring(creatorName),
-					tostring(badgeName)
-				),
-				Icon = "rbxassetid://105057612780097",
-				Duration = 5
-			})
-		end)
-	end)
-end
-]]
-
-local function injectClient(player)
-	local pg = player:WaitForChild("PlayerGui", 20)
-	if not pg then return end
-
-	local existing = pg:FindFirstChild("BadgeChain_NotifyClient")
-	if existing then existing:Destroy() end
-
-	local ls = Instance.new("LocalScript")
-	ls.Name = "BadgeChain_NotifyClient"
-	ls.Source = clientSource
-	ls.Parent = pg
-end
-
-Players.PlayerAdded:Connect(injectClient)
-for _, p in ipairs(Players:GetPlayers()) do
-	task.spawn(injectClient, p)
-end
-
--- Creator name cache
-local creatorCache = {}
-local function getCreatorName(placeId)
-	if creatorCache[placeId] then
-		return creatorCache[placeId]
-	end
-	local ok, info = pcall(function()
-		return MarketplaceService:GetProductInfo(placeId)
-	end)
-	local name = "Unknown"
-	if ok and info and info.Creator and info.Creator.Name then
-		name = info.Creator.Name
-	end
-	creatorCache[placeId] = name
-	return name
-end
-
-local function fireBadgeNotification(player, badgeName)
-	if not player or not player.Parent then return end
-	local creatorName = getCreatorName(game.PlaceId)
-	notifyRemote:FireClient(player, player.Name, creatorName, badgeName or "Badge")
-end
+local BadgeNotifRemote = Instance.new("RemoteEvent")
+BadgeNotifRemote.Name = "BadgeChain_Notify"
+BadgeNotifRemote.Parent = ReplicatedStorage
 
 --============================================================
--- SAFE TELEPORT (only change)
+-- SAFE TELEPORT
 --============================================================
 local ATTEMPT_LIMIT = 6
 local RETRY_DELAY = 4.20
@@ -177,14 +79,12 @@ local function SafeTeleport(placeId, players, options)
 	return success, result
 end
 
--- Handle the case where TeleportAsync succeeds but the teleport later fails
 TeleportService.TeleportInitFailed:Connect(function(player, teleportResult, errorMessage, placeId, teleportOptions)
 	if teleportResult == Enum.TeleportResult.Flooded then
 		task.wait(FLOOD_DELAY)
 	elseif teleportResult == Enum.TeleportResult.Failure then
 		task.wait(RETRY_DELAY)
 	else
-		-- permanent / invalid – do not retry forever
 		warn(string.format(
 			"[BadgeChain] TeleportInitFailed [%s]: %s (place %s)",
 			tostring(teleportResult),
@@ -194,7 +94,6 @@ TeleportService.TeleportInitFailed:Connect(function(player, teleportResult, erro
 		return
 	end
 
-	-- only retry if the player is still here
 	if player and player.Parent then
 		pcall(function()
 			TeleportService:TeleportAsync(placeId, {player}, teleportOptions)
@@ -214,6 +113,7 @@ end
 -- ENVIRONMENT SETUP
 --============================================================
 Players.CharacterAutoLoads = false
+
 --============================================================
 -- STATE & CHAIN DATA
 --============================================================
@@ -256,7 +156,6 @@ local function loadGameList()
 	listLoadedEvent:Fire()
 end
 
--- Load the list independently. The player GUI does not wait for this request.
 task.spawn(loadGameList)
 
 --============================================================
@@ -284,7 +183,6 @@ local function fetchBadgesForUniverse(universeId)
 			return HttpService:GetAsync(url, true)
 		end)
 
-		-- Fall back to Roblox's endpoint if the proxy fails.
 		if not success then
 			url = string.format(
 				"https://badges.roblox.com/v1/universes/%d/badges?limit=100&sortOrder=Asc%s",
@@ -298,12 +196,7 @@ local function fetchBadgesForUniverse(universeId)
 		end
 
 		if not success then
-			warn(
-				"[BadgeChain] Failed to fetch badges for universe "
-					.. tostring(universeId)
-					.. ": "
-					.. tostring(response)
-			)
+			warn("[BadgeChain] Failed to fetch badges for universe " .. tostring(universeId) .. ": " .. tostring(response))
 			return nil
 		end
 
@@ -311,22 +204,16 @@ local function fetchBadgesForUniverse(universeId)
 			return HttpService:JSONDecode(response)
 		end)
 
-		-- Do not mistake an unexpected API response for a completed badge list.
-		if not decodeSuccess
-			or type(data) ~= "table"
-			or type(data.data) ~= "table" then
-
-			warn(
-				"[BadgeChain] Invalid badge-list response for universe "
-					.. tostring(universeId)
-			)
+		if not decodeSuccess or type(data) ~= "table" or type(data.data) ~= "table" then
+			warn("[BadgeChain] Invalid badge-list response for universe " .. tostring(universeId))
 			return nil
 		end
 
 		for _, badge in ipairs(data.data) do
 			if badge.id and badge.enabled ~= false then
 				table.insert(all, {
-					id = badge.id
+					id = badge.id,
+					name = badge.displayName or badge.name or ("Badge " .. tostring(badge.id))
 				})
 			end
 		end
@@ -337,17 +224,11 @@ local function fetchBadgesForUniverse(universeId)
 			break
 		end
 
-		-- Keep light pacing between paginated HTTP requests.
 		task.wait(0.08)
 	end
 
-	-- Never treat a failed/empty response as proof that an experience is done.
 	if #all == 0 then
-		warn(
-			"[BadgeChain] Zero badges returned for universe "
-				.. tostring(universeId)
-				.. "; refusing to skip this experience."
-		)
+		warn("[BadgeChain] Zero badges returned for universe " .. tostring(universeId) .. "; refusing to skip this experience.")
 		return nil
 	end
 
@@ -359,19 +240,34 @@ end
 --============================================================
 local function isRateLimitError(err)
 	local lower = string.lower(tostring(err))
-
 	for _, keyword in ipairs(RATE_LIMIT_KEYWORDS) do
 		if string.find(lower, keyword, 1, true) then
 			return true
 		end
 	end
-
 	return false
 end
 
 --============================================================
+-- GET CREATOR NAME (exact official format)
+--============================================================
+local function getCreatorName(placeId)
+	local success, info = pcall(function()
+		return MarketplaceService:GetProductInfo(placeId)
+	end)
+
+	if success and type(info) == "table" then
+		if info.Creator and info.Creator.Name then
+			return info.Creator.Name
+		end
+	end
+
+	-- Fallback
+	return "Unknown"
+end
+
+--============================================================
 -- UI CONSTRUCTION
--- Original GUI restored. It is built before waiting for network requests.
 --============================================================
 local function createGui(player)
 	local playerGui = player:WaitForChild("PlayerGui", 10)
@@ -392,6 +288,44 @@ local function createGui(player)
 	screenGui.SafeAreaCompatibility = Enum.SafeAreaCompatibility.FullscreenExtension
 	screenGui.SelectionGroup = false
 	screenGui.Parent = playerGui
+
+	-- Robust client-side handler (retries until CoreScripts are ready)
+	local clientScript = Instance.new("LocalScript")
+	clientScript.Name = "BadgeChain_ClientNotif"
+	clientScript.Source = [[
+local StarterGui = game:GetService("StarterGui")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local remote = ReplicatedStorage:WaitForChild("BadgeChain_Notify", 30)
+
+-- Keep trying to disable the default gold badge notifications
+task.spawn(function()
+	for i = 1, 30 do
+		local ok = pcall(function()
+			StarterGui:SetCore("BadgesNotificationsActive", false)
+		end)
+		if ok then break end
+		task.wait(0.5)
+	end
+end)
+
+if remote then
+	remote.OnClientEvent:Connect(function(playerName, creatorName, badgeName)
+		-- Exact official format + violet icon + 5 second duration
+		pcall(function()
+			StarterGui:SetCore("SendNotification", {
+				Title = "Badge Awarded",
+				Text = string.format('%s won %s\'s "%s" award!', tostring(playerName), tostring(creatorName), tostring(badgeName)),
+				Icon = "rbxassetid://105057612780097",
+				Duration = 5
+			})
+		end)
+	end)
+end
+]]
+	clientScript.Parent = screenGui
 
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Name = "Mainframe"
@@ -646,11 +580,7 @@ local function createGui(player)
 	statusLabel.TextColor3 = Color3.new(0.733, 0.541, 1)
 	statusLabel.TextSize = 20
 	statusLabel.TextScaled = true
-	statusLabel.FontFace = Font.fromName(
-		"HighwayGothic",
-		Enum.FontWeight.Regular,
-		Enum.FontStyle.Italic
-	)
+	statusLabel.FontFace = Font.fromName("HighwayGothic", Enum.FontWeight.Regular, Enum.FontStyle.Italic)
 	statusLabel.Parent = mainFrame
 
 	local statusShadow = Instance.new("UIShadow")
@@ -670,11 +600,7 @@ local function createGui(player)
 	gamePositionLabel.TextColor3 = Color3.new(0.659, 0.651, 0.686)
 	gamePositionLabel.TextSize = 36
 	gamePositionLabel.TextScaled = true
-	gamePositionLabel.FontFace = Font.fromName(
-		"LegacyArial",
-		Enum.FontWeight.Bold,
-		Enum.FontStyle.Normal
-	)
+	gamePositionLabel.FontFace = Font.fromName("LegacyArial", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 	gamePositionLabel.Parent = mainFrame
 
 	local gamePositionStroke = Instance.new("UIStroke")
@@ -700,11 +626,7 @@ local function createGui(player)
 	mainTitle.TextColor3 = Color3.new(0.659, 0.651, 0.686)
 	mainTitle.TextSize = 36
 	mainTitle.TextScaled = true
-	mainTitle.FontFace = Font.fromName(
-		"HighwayGothic",
-		Enum.FontWeight.Bold,
-		Enum.FontStyle.Normal
-	)
+	mainTitle.FontFace = Font.fromName("HighwayGothic", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 	mainTitle.Parent = mainFrame
 
 	local mainTitleStroke = Instance.new("UIStroke")
@@ -741,40 +663,30 @@ local function setPhase(gui, statusStr, infoStr)
 end
 
 local function updateProgress(gui, owned, total)
-	if not gui then
-		return
-	end
+	if not gui then return end
 
-	local alpha = (total > 0)
-		and math.clamp(owned / total, 0, 1)
-		or 0
+	local alpha = (total > 0) and math.clamp(owned / total, 0, 1) or 0
 
-	TweenService:Create(
-		gui.barFill,
-		TWEEN_BAR,
-		{
-			Size = UDim2.new(
-				MAX_BAR_WIDTH * alpha,
-				0,
-				BAR_HEIGHT,
-				0
-			)
-		}
-	):Play()
+	TweenService:Create(gui.barFill, TWEEN_BAR, {
+		Size = UDim2.new(MAX_BAR_WIDTH * alpha, 0, BAR_HEIGHT, 0)
+	}):Play()
 
 	gui.awardedOfTotal.Text = string.format("%d / %d", owned, total)
 	gui.remainingBadges.Text = string.format("%d Remaining", math.max(0, total - owned))
+end
+
+-- Fire exact official notification
+local function fireBadgeNotification(player, badge, creatorName)
+	if not player or not player.Parent then return end
+	BadgeNotifRemote:FireClient(player, player.Name, creatorName, badge.name or tostring(badge.id))
 end
 
 --============================================================
 -- MAIN FLOW
 --============================================================
 local function processPlayer(player)
-	if not player.Parent then
-		return
-	end
+	if not player.Parent then return end
 
-	-- Display the GUI immediately, before downloading the index or badges.
 	local gui = createGui(player)
 	if not gui then
 		warn("[BadgeChain] Could not create the GUI for " .. player.Name)
@@ -783,14 +695,11 @@ local function processPlayer(player)
 
 	setPhase(gui, "Waiting...", "Loading game data...")
 
-	-- Wait for the ID-Index only after the GUI is already visible.
 	if not listLoaded then
 		listLoadedEvent.Event:Wait()
 	end
 
-	if not player.Parent then
-		return
-	end
+	if not player.Parent then return end
 
 	if #gameList == 0 then
 		setPhase(gui, "Error", "The game index failed to load.")
@@ -814,20 +723,16 @@ local function processPlayer(player)
 		return
 	end
 
-	local nextPlaceId = currentIndex < #gameList
-		and gameList[currentIndex + 1].placeId
-		or nil
+	local nextPlaceId = currentIndex < #gameList and gameList[currentIndex + 1].placeId or nil
 
-	gui.gameTracker.Text = string.format(
-		"Game %d of %d",
-		currentIndex,
-		#gameList
-	)
+	gui.gameTracker.Text = string.format("Game %d of %d", currentIndex, #gameList)
+
+	-- Get the creator name once for this experience (exact official format)
+	local creatorName = getCreatorName(currentPlace)
 
 	local dsKey = "User_" .. player.UserId .. "_Universe_" .. currentUniverse
 	local alreadyAwarded = {}
 
-	-- Recover from TeleportData.
 	local joinData = player:GetJoinData()
 	local teleportData = joinData and joinData.TeleportData or {}
 
@@ -837,7 +742,6 @@ local function processPlayer(player)
 		end
 	end
 
-	-- Load the permanent cache.
 	local dsSuccess, dsData = pcall(function()
 		return BadgeCache:GetAsync(dsKey)
 	end)
@@ -852,32 +756,25 @@ local function processPlayer(player)
 
 	local function saveCache()
 		local toSave = {}
-
 		for id in pairs(alreadyAwarded) do
 			local numericId = tonumber(id)
 			if numericId then
 				table.insert(toSave, numericId)
 			end
 		end
-
 		local success, err = pcall(function()
 			BadgeCache:SetAsync(dsKey, toSave)
 		end)
-
 		if not success then
 			warn("[BadgeChain] Cache save failed: " .. tostring(err))
 		end
 	end
 
-	--========================================================
-	-- LOAD BADGES
-	--========================================================
 	setPhase(gui, "Loading badges...", "Fetching badge data...")
 
 	local badges = fetchBadgesForUniverse(currentUniverse)
 
 	if not badges then
-		-- Failsafe: auto-rejoin instead of requiring manual rejoin.
 		setPhase(gui, "Error:", "Badges failed to load. Auto-rejoining...")
 		task.wait(2)
 		local teleportOptions = Instance.new("TeleportOptions")
@@ -886,15 +783,10 @@ local function processPlayer(player)
 		if not ok then
 			warn("[BadgeChain] Auto-rejoin teleport failed after retries: " .. tostring(err))
 		end
-		while player.Parent do
-			task.wait(1)
-		end
+		while player.Parent do task.wait(1) end
 		return
 	end
 
-	--========================================================
-	-- CHECK OWNERSHIP IN BATCHES OF UP TO 100
-	--========================================================
 	local toAward = {}
 	local ownedCount = 0
 	local total = #badges
@@ -912,16 +804,11 @@ local function processPlayer(player)
 	updateProgress(gui, ownedCount, total)
 
 	for firstIndex = 1, #unchecked, BADGE_CHECK_BATCH_SIZE do
-		if not player.Parent then
-			return
-		end
+		if not player.Parent then return end
 
 		local batchBadges = {}
 		local badgeIds = {}
-		local lastIndex = math.min(
-			firstIndex + BADGE_CHECK_BATCH_SIZE - 1,
-			#unchecked
-		)
+		local lastIndex = math.min(firstIndex + BADGE_CHECK_BATCH_SIZE - 1, #unchecked)
 
 		for i = firstIndex, lastIndex do
 			table.insert(batchBadges, unchecked[i])
@@ -930,10 +817,7 @@ local function processPlayer(player)
 
 		local ownedInBatch = {}
 		local checkSuccess, result = pcall(function()
-			return BadgeService:GetUserBadgesAsync(
-				player.UserId,
-				badgeIds
-			)
+			return BadgeService:GetUserBadgesAsync(player.UserId, badgeIds)
 		end)
 
 		if checkSuccess and type(result) == "table" then
@@ -943,39 +827,22 @@ local function processPlayer(player)
 				end
 			end
 		else
-			warn(
-				"[BadgeChain] Batch check failed; falling back to individual checks: "
-					.. tostring(result)
-			)
-
+			warn("[BadgeChain] Batch check failed; falling back to individual checks: " .. tostring(result))
 			for _, badge in ipairs(batchBadges) do
-				if not player.Parent then
-					return
-				end
-
+				if not player.Parent then return end
 				local ok, hasBadge = pcall(function()
-					return BadgeService:UserHasBadgeAsync(
-						player.UserId,
-						badge.id
-					)
+					return BadgeService:UserHasBadgeAsync(player.UserId, badge.id)
 				end)
-
 				if ok and hasBadge then
 					ownedInBatch[tostring(badge.id)] = true
 				elseif not ok then
-					warn(
-						"[BadgeChain] Ownership check failed for badge "
-							.. tostring(badge.id)
-							.. ": "
-							.. tostring(hasBadge)
-					)
+					warn("[BadgeChain] Ownership check failed for badge " .. tostring(badge.id) .. ": " .. tostring(hasBadge))
 				end
 			end
 		end
 
 		for _, badge in ipairs(batchBadges) do
 			local key = tostring(badge.id)
-
 			if ownedInBatch[key] then
 				if not alreadyAwarded[key] then
 					alreadyAwarded[key] = true
@@ -989,126 +856,73 @@ local function processPlayer(player)
 		updateProgress(gui, ownedCount, total)
 	end
 
-	--========================================================
-	-- AWARD BADGES
-	--========================================================
 	setPhase(gui, "Preparing to award...", "Waiting before awarding...")
 	task.wait(PRE_AWARD_WAIT)
 
 	local awardAttemptsThisServer = 0
 
 	for index, badge in ipairs(toAward) do
-		if not player.Parent then
-			return
-		end
+		if not player.Parent then return end
 
 		awardAttemptsThisServer += 1
 
 		local success, result = pcall(function()
-			return BadgeService:AwardBadgeAsync(
-				player.UserId,
-				badge.id
-			)
+			return BadgeService:AwardBadgeAsync(player.UserId, badge.id)
 		end)
 
 		if success and result == true then
 			ownedCount += 1
 			alreadyAwarded[tostring(badge.id)] = true
 
-			setPhase(
-				gui,
-				"Awarding badges...",
-				"Awarded Badge: " .. tostring(badge.id)
-			)
+			setPhase(gui, "Awarding badges...", "Awarded Badge: " .. tostring(badge.name or badge.id))
 
-			-- Official CoreGui notification with violet icon
-			local badgeName = "Badge"
-			local okInfo, info = pcall(function()
-				return BadgeService:GetBadgeInfoAsync(badge.id)
-			end)
-			if okInfo and info and info.Name then
-				badgeName = info.Name
-			end
-			fireBadgeNotification(player, badgeName)
+			-- Exact official notification (5s, correct wording, violet icon)
+			fireBadgeNotification(player, badge, creatorName)
 
 		elseif success and result == false then
-			-- Preserve the original script's handling of a false result.
 			ownedCount += 1
 			alreadyAwarded[tostring(badge.id)] = true
-
 		else
 			if isRateLimitError(result) then
-				warn(
-					"[BadgeChain] Rate limited while awarding badge "
-						.. tostring(badge.id)
-						.. ": "
-						.. tostring(result)
-				)
+				warn("[BadgeChain] Rate limited while awarding badge " .. tostring(badge.id) .. ": " .. tostring(result))
 			else
-				warn(
-					"[BadgeChain] Error awarding badge "
-						.. tostring(badge.id)
-						.. ": "
-						.. tostring(result)
-				)
+				warn("[BadgeChain] Error awarding badge " .. tostring(badge.id) .. ": " .. tostring(result))
 			end
 		end
 
-		-- Limit progress-bar work to every five badges.
 		if ownedCount % 1 == 0 or index == #toAward then
 			updateProgress(gui, ownedCount, total)
 		end
 
-		-- Keep the server request cap and save progress before hopping.
-		if awardAttemptsThisServer >= AWARDS_PER_SERVER
-			and index < #toAward then
-
-			setPhase(
-				gui,
-				"Switching servers...",
-				"Rate limit reached. Moving to a new server..."
-			)
-
+		if awardAttemptsThisServer >= AWARDS_PER_SERVER and index < #toAward then
+			setPhase(gui, "Switching servers...", "Rate limit reached. Moving to a new server...")
 			saveCache()
 
 			local teleportOptions = Instance.new("TeleportOptions")
 			teleportOptions.ShouldReserveServer = true
 
-			local saveData = {
-				awardedIds = {},
-				fromChain = true
-			}
-
+			local saveData = { awardedIds = {}, fromChain = true }
 			for id in pairs(alreadyAwarded) do
 				local numericId = tonumber(id)
 				if numericId then
 					table.insert(saveData.awardedIds, numericId)
 				end
 			end
-
 			teleportOptions:SetTeleportData(saveData)
 
-			-- Improved teleport – only change
 			local ok, err = SafeTeleport(currentPlace, {player}, teleportOptions)
 			if not ok then
 				warn("[BadgeChain] Server-hop teleport failed after retries: " .. tostring(err))
 			end
 
-			-- Keep the player here until they actually leave (SafeTeleport + TeleportInitFailed handle retries)
-			while player.Parent do
-				task.wait(1)
-			end
+			while player.Parent do task.wait(1) end
 			return
 		end
 	end
 
-	-- Display the actual count, not an assumed 100%.
 	updateProgress(gui, ownedCount, total)
 	saveCache()
 
-	--========================================================
-	-- COMPLETION SOUND
-	--========================================================
 	local completeSound = Instance.new("Sound")
 	completeSound.SoundId = "rbxassetid://107978604605265"
 	completeSound.Volume = 0.69
@@ -1116,63 +930,30 @@ local function processPlayer(player)
 	completeSound.Parent = gui.screen
 	completeSound:Play()
 
-	--========================================================
-	-- MOVE TO THE NEXT EXPERIENCE
-	--========================================================
 	if nextPlaceId then
 		if ownedCount >= total then
-			setPhase(
-				gui,
-				"Awarded all badges in this game!",
-				"Teleporting to the next..."
-			)
+			setPhase(gui, "Awarded all badges in this game!", "Teleporting to the next...")
 		else
-			setPhase(
-				gui,
-				"Continuing chain...",
-				string.format(
-					"Warning: %d badges were not confirmed, please rejoin!",
-					math.max(0, total - ownedCount)
-				)
-			)
+			setPhase(gui, "Continuing chain...", string.format("Warning: %d badges were not confirmed, please rejoin!", math.max(0, total - ownedCount)))
 		end
 
-		-- Configurable wait after awarding before teleporting
 		task.wait(POST_AWARD_WAIT)
 
 		local teleportOptions = Instance.new("TeleportOptions")
-		teleportOptions:SetTeleportData({
-			fromChain = true
-		})
+		teleportOptions:SetTeleportData({ fromChain = true })
 
-		-- Improved teleport – only change
 		local ok, err = SafeTeleport(nextPlaceId, {player}, teleportOptions)
 		if not ok then
 			warn("[BadgeChain] Next-game teleport failed after retries: " .. tostring(err))
 		end
 
-		-- Keep the player here until they actually leave
-		while player.Parent do
-			task.wait(1)
-		end
+		while player.Parent do task.wait(1) end
 	else
 		if ownedCount >= total then
-			setPhase(
-				gui,
-				"Come back soon for more badges!",
-				"Chain complete!"
-			)
-
+			setPhase(gui, "Come back soon for more badges!", "Chain complete!")
 			gui.remainingBadges.Text = "Chain complete!"
 		else
-			setPhase(
-				gui,
-				"Chain ended with some failures...",
-				string.format(
-					"%d badges were not confirmed!",
-					math.max(0, total - ownedCount)
-				)
-			)
+			setPhase(gui, "Chain ended with some failures...", string.format("%d badges were not confirmed!", math.max(0, total - ownedCount)))
 		end
 	end
 end
